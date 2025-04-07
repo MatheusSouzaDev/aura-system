@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import Navbar from "../_components/navbar";
 import SummaryCards from "./_components/summary-cards";
 import TimeSelect from "./_components/time-select";
+import TransactionsPieChart from "./_components/transactions-pie-chart";
+import { getDashboard } from "../_data/get-dashboard";
 
 const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
   const { userId } = await auth();
@@ -10,7 +12,10 @@ const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
     redirect("/login");
   }
 
-  const currentMonth = searchParams.month || String(new Date().getMonth() + 1); // Define o mês atual como padrão se não houver na URL
+  const currentMonth = searchParams.month || String(new Date().getMonth() + 1);
+  const dashboard = await getDashboard({
+    month: currentMonth,
+  });
 
   return (
     <>
@@ -18,11 +23,16 @@ const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
       <div className="space-y-6 p-6">
         <div className="flex justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <TimeSelect month={currentMonth} />{" "}
-          {/* Passando o mês para TimeSelect */}
+          <TimeSelect month={currentMonth} />
         </div>
-        <SummaryCards month={currentMonth} />{" "}
-        {/* Garantindo que SummaryCards receba o mês correto */}
+        <div className="grid grid-cols-[2fr,1fr]">
+          <div className="flex flex-col gap-6">
+            <SummaryCards {...dashboard} />
+            <div className="grid grid-cols-3 grid-rows-1 gap-6">
+              <TransactionsPieChart {...dashboard} />
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
