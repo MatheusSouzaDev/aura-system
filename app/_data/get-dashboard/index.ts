@@ -94,7 +94,7 @@ export const getDashboard = async ({ month }: { month: string }) => {
     orderBy: {
       date: "desc",
     },
-    take: 10,
+    take: 15,
   });
 
   return {
