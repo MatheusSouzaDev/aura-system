@@ -20,7 +20,7 @@ const ExpensePerCategory = ({
         {expensesPerCategory.map((category) => (
           <div key={category.category} className="space-y-2">
             <div className="flex w-full justify-between">
-              <p className="text sm font-bold">
+              <p className="text-sm font-bold">
                 {TRANSACTION_CATEGORY_LABELS[category.category]}
               </p>
               <p className="text sm font-bold">{category.percentageOfTotal}%</p>
