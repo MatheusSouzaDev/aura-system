@@ -14,7 +14,7 @@ export const createStripeCheckout = async () => {
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2024-10-28.acacia",
+    apiVersion: "2025-04-30.basil",
   });
 
   const session = await stripe.checkout.sessions.create({
@@ -24,7 +24,7 @@ export const createStripeCheckout = async () => {
     cancel_url: "http://localhost:3000",
     subscription_data: {
       metadata: {
-        userId,
+        clerk_user_id: userId,
       },
     },
     line_items: [
@@ -34,7 +34,7 @@ export const createStripeCheckout = async () => {
       },
     ],
     metadata: {
-      userId,
+      clerk_user_id: userId,
     },
   });
 
