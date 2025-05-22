@@ -8,6 +8,7 @@ import { getDashboard } from "../_data/get-dashboard";
 import ExpensePerCategory from "./_components/expense-per-category";
 import LastTransactions from "./_components/last-transactions";
 import { canUserAddTransaction } from "../_data/can-user-add-transaction";
+import AiReportButton from "./_components/ai-report-button";
 
 const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
   const { userId } = await auth();
@@ -27,7 +28,10 @@ const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
       <div className="flex h-full flex-col space-y-6 overflow-hidden p-6">
         <div className="flex justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <TimeSelect month={currentMonth} />
+          <div className="flex items-center gap-3">
+            <AiReportButton month={currentMonth} />
+            <TimeSelect month={currentMonth} />
+          </div>
         </div>
         <div className="grid grid-cols-[2fr,1fr] gap-6 overflow-hidden">
           <div className="flex flex-col gap-6 overflow-hidden">
