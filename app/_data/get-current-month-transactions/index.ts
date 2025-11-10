@@ -1,18 +1,15 @@
+import { getDashboardContext } from "../dashboard-context";
 import { db } from "@/app/_lib/prisma";
-import { auth } from "@clerk/nextjs/server";
-import { endOfMonth, startOfMonth } from "date-fns";
 
 export const getCurrentMonthTransactions = async () => {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+  const { userId, currentPeriod } = await getDashboardContext();
+  
   return db.transaction.count({
     where: {
       userId,
       createdAt: {
-        gte: startOfMonth(new Date()),
-        lte: endOfMonth(new Date()),
+        gte: currentPeriod.start,
+        lte: currentPeriod.end,
       },
     },
   });

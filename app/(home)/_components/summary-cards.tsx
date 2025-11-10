@@ -8,14 +8,18 @@ import SummaryCard from "./summary-card";
 
 interface summaryCardsProps {
   balanceTotal: number;
+  previousMonthBalance: number;
+  balanceDifference: number;
   depositTotal: number;
   expensesTotal: number;
   investmentsTotal: number;
   userCanAddTransaction?: boolean;
 }
 
-const SummaryCards = async ({
+const SummaryCards = ({
   balanceTotal,
+  previousMonthBalance,
+  balanceDifference,
   depositTotal,
   expensesTotal,
   investmentsTotal,
@@ -28,6 +32,8 @@ const SummaryCards = async ({
         title="Saldo"
         amount={balanceTotal}
         size="large"
+        previousAmount={previousMonthBalance}
+        difference={balanceDifference}
         userCanAddTransaction={userCanAddTransaction}
       />
       <div className="grid grid-cols-3 gap-6">
