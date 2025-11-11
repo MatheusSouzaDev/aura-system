@@ -5,6 +5,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+interface NavLinkItem {
+  href: string;
+  label: string;
+}
+
+export const NAV_LINKS: NavLinkItem[] = [
+  {
+    href: "/",
+    label: "Dashboard",
+  },
+  {
+    href: "/transactions",
+    label: "Transações",
+  },
+  {
+    href: "/subscription",
+    label: "Assinatura",
+  },
+];
+
 const Navbar = () => {
   const pathname = usePathname();
   return (
@@ -14,38 +34,23 @@ const Navbar = () => {
           src="/logo.svg"
           width={173}
           height={39}
-          alt="Aura System Finance AI"
+          alt="Aura System Finance AI logo"
         />
-        <Link
-          href="/"
-          className={
-            pathname === "/"
-              ? "font-bold text-primary"
-              : "text-muted-foreground"
-          }
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/transactions"
-          className={
-            pathname === "/transactions"
-              ? "font-bold text-primary"
-              : "text-muted-foreground"
-          }
-        >
-          Transações
-        </Link>
-        <Link
-          href="/subscription"
-          className={
-            pathname === "/subscription"
-              ? "font-bold text-primary"
-              : "text-muted-foreground"
-          }
-        >
-          Assinatura
-        </Link>
+        {NAV_LINKS.map(({ href, label }) => {
+          const isActive = pathname === href;
+
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={
+                isActive ? "font-bold text-primary" : "text-muted-foreground"
+              }
+            >
+              {label}
+            </Link>
+          );
+        })}
       </div>
       <UserButton showName />
     </nav>

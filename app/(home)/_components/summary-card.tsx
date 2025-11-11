@@ -1,8 +1,9 @@
 import AddTransactionButton from "@/app/_components/add-transaction-button";
 import { Card, CardContent, CardHeader } from "@/app/_components/ui/card";
+import { formatCurrency } from "@/app/_utils/currency";
 import { ArrowDownRightIcon, ArrowUpRightIcon, MinusIcon } from "lucide-react";
 
-interface SummaryCardProps {
+export interface SummaryCardProps {
   icon: React.ReactNode;
   title: string;
   amount: number;
@@ -21,12 +22,6 @@ const SummaryCard = ({
   previousAmount,
   difference,
 }: SummaryCardProps) => {
-  const formatCurrency = (value: number) =>
-    Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-
   const hasHistoricalData = typeof previousAmount === "number";
   const differenceValue = typeof difference === "number" ? difference : 0;
   const differenceColor =
@@ -59,7 +54,7 @@ const SummaryCard = ({
           <AddTransactionButton userCanAddTransaction={userCanAddTransaction} />
         )}
       </CardContent>
-      
+
       {size === "large" && hasHistoricalData && (
         <CardContent className="pt-0">
           <div className="flex items-start justify-between gap-6 text-sm">

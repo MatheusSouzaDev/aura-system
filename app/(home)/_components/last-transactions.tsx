@@ -1,9 +1,16 @@
 import { Button } from "@/app/_components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/app/_components/ui/card";
 import { ScrollArea } from "@/app/_components/ui/scroll-area";
-import { TRANSACTION_PAYMENT_METHOD_ICONS } from "@/app/_constants/transactions";
+import {
+  TRANSACTION_PAYMENT_METHOD_ICONS,
+  TRANSACTION_PAYMENT_METHOD_LABELS,
+} from "@/app/_constants/transactions";
 import { formatCurrency } from "@/app/_utils/currency";
-import { Transaction, TransactionType } from "@prisma/client";
+import {
+  getTransactionAmountColor,
+  getTransactionAmountPrefix,
+} from "@/app/_utils/transactions";
+import { Transaction } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -12,25 +19,6 @@ interface LastTransactionsProps {
 }
 
 const LastTransactions = ({ lastTransactions }: LastTransactionsProps) => {
-  const getAmountColor = (transaction: Transaction) => {
-    if (transaction.type === TransactionType.EXPENSE) {
-      return "text-red-500";
-    }
-    if (transaction.type === TransactionType.DEPOSIT) {
-      return "text-primary";
-    }
-    return "text-white";
-  };
-
-  const getAmountPrefix = (transaction: Transaction) => {
-    if (transaction.type === TransactionType.EXPENSE) {
-      return "-";
-    }
-    if (transaction.type === TransactionType.DEPOSIT) {
-      return "+";
-    }
-  };
-
   return (
     <ScrollArea className="rounded-md border">
       <CardHeader className="flex-row items-center justify-between">
@@ -53,7 +41,9 @@ const LastTransactions = ({ lastTransactions }: LastTransactionsProps) => {
                   }
                   width={20}
                   height={20}
-                  alt="Test"
+                  alt={
+                    TRANSACTION_PAYMENT_METHOD_LABELS[transaction.paymentMethod]
+                  }
                 />
               </div>
               <div>
@@ -67,8 +57,10 @@ const LastTransactions = ({ lastTransactions }: LastTransactionsProps) => {
                 </p>
               </div>
             </div>
-            <p className={`text-sm font-bold ${getAmountColor(transaction)}`}>
-              {getAmountPrefix(transaction)}
+            <p
+              className={`text-sm font-bold ${getTransactionAmountColor(transaction.type)}`}
+            >
+              {getTransactionAmountPrefix(transaction.type)}
               {formatCurrency(Number(transaction.amount))}
             </p>
           </div>
