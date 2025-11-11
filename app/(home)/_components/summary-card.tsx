@@ -32,18 +32,18 @@ const SummaryCard = ({
         : "text-muted-foreground";
 
   return (
-    <Card className={`${size === "large" ? "bg-white/5" : ""}`}>
-      <CardHeader className="flex-row items-center gap-4">
+    <Card className={`h-full min-w-0 ${size === "large" ? "bg-white/5" : ""}`}>
+      <CardHeader className="flex-row items-center gap-4 space-y-0 p-4 sm:p-6">
         {icon}
         <p
           className={`${
             size === "small" ? "text-muted-foreground" : "text-white/70"
-          } `}
+          }`}
         >
           {title}
         </p>
       </CardHeader>
-      <CardContent className="flex justify-between">
+      <CardContent className="flex flex-wrap items-start justify-between gap-4 p-4 pt-0 sm:flex-nowrap sm:p-6 sm:pt-0">
         <p
           className={`font-bold ${size === "small" ? "text-2xl" : "text-4xl"}`}
         >
@@ -56,7 +56,7 @@ const SummaryCard = ({
       </CardContent>
 
       {size === "large" && hasHistoricalData && (
-        <CardContent className="pt-0">
+        <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
           <div className="flex items-start justify-between gap-6 text-sm">
             <div className="space-y-1">
               <p className="text-muted-foreground">Saldo mês anterior</p>

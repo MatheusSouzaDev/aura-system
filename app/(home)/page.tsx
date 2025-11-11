@@ -26,10 +26,10 @@ const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
   return (
     <>
       <Navbar />
-      <div className="flex h-full flex-col space-y-6 overflow-hidden p-6">
-        <div className="flex justify-between">
+      <div className="flex h-full flex-col gap-6 overflow-hidden p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
             <AiReportButton
               month={currentMonth}
               hasPlusPlan={user.publicMetadata.subscriptionPlan == "plus"}
@@ -37,20 +37,22 @@ const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
             <TimeSelect month={currentMonth} />
           </div>
         </div>
-        <div className="grid grid-cols-[2fr,1fr] gap-6 overflow-hidden">
-          <div className="flex flex-col gap-6 overflow-hidden">
+        <div className="grid grid-cols-1 gap-6 overflow-hidden sm:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
+          <div className="flex min-w-0 flex-col gap-6 overflow-hidden">
             <SummaryCards
               {...dashboard}
               userCanAddTransaction={userCanAddTransaction}
             />
-            <div className="grid grid-cols-3 grid-rows-1 gap-6 overflow-hidden">
+            <div className="grid min-w-0 grid-cols-1 gap-6 overflow-hidden sm:grid-cols-3">
               <TransactionsPieChart {...dashboard} />
               <ExpensePerCategory
                 expensesPerCategory={dashboard.totalExpensePerCategory}
               />
             </div>
           </div>
-          <LastTransactions lastTransactions={dashboard.lastTransactions} />
+          <div className="min-w-0">
+            <LastTransactions lastTransactions={dashboard.lastTransactions} />
+          </div>
         </div>
       </div>
     </>
