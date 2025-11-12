@@ -45,7 +45,7 @@ export const getDashboard = async ({
     },
   };
 
-   const [
+  const [
     depositAggregate,
     expensesAggregate,
     investmentsAggregate,
@@ -124,7 +124,7 @@ export const getDashboard = async ({
   const investmentsTotal = Number(investmentsAggregate._sum.amount ?? 0);
   const transactionsTotal = Number(transactionsAggregate._sum.amount ?? 0);
 
-const previousMonthDepositTotal = Number(
+  const previousMonthDepositTotal = Number(
     previousDepositAggregate._sum.amount ?? 0,
   );
   const previousMonthExpensesTotal = Number(
@@ -134,12 +134,12 @@ const previousMonthDepositTotal = Number(
     previousInvestmentsAggregate._sum.amount ?? 0,
   );
 
-  const balanceTotal = depositTotal - expensesTotal - investmentsTotal;
   const previousMonthBalance =
     previousMonthDepositTotal -
     previousMonthExpensesTotal -
     previousMonthInvestmentsTotal;
-  const balanceDifference = balanceTotal - previousMonthBalance;
+  const balanceDifference = depositTotal - expensesTotal - investmentsTotal;
+  const balanceTotal = previousMonthBalance + balanceDifference;
 
   const typesPercentage: TransactionPercentagePerType = {
     [TransactionType.DEPOSIT]: calculatePercentage(
