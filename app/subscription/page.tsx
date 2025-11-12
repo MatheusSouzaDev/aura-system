@@ -19,10 +19,10 @@ const SubscriptionPage = async () => {
   return (
     <>
       <Navbar />
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 px-4 py-3 sm:p-6">
         <h1 className="text-2xl font-bold">Assinatura</h1>
-        <div className="flex gap-6">
-          <Card className="w-[450px]">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <Card className="w-full">
             <CardHeader className="border-b border-solid py-8">
               <h2 className="text-center text-2xl font-semibold">
                 Plano Basico
@@ -47,7 +47,7 @@ const SubscriptionPage = async () => {
             </CardContent>
           </Card>
 
-          <Card className="w-[450px]">
+          <Card className="w-full">
             <CardHeader className="relative border-b border-solid py-8">
               {hasPlusPlan && (
                 <Badge className="absolute left-4 top-10 bg-primary/10 text-base text-primary">

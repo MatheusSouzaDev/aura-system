@@ -28,14 +28,22 @@ export const NAV_LINKS: NavLinkItem[] = [
 const Navbar = () => {
   const pathname = usePathname();
   return (
-    <nav className="flex justify-between border-b border-solid px-4 py-3 sm:px-8">
-      <div className="flex min-w-0 flex-wrap items-center gap-4 overflow-x-auto sm:gap-10">
+    <nav className="flex flex-col gap-2 border-b border-solid px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      {/* Top row (mobile): logo left, user button right */}
+      <div className="flex items-center justify-between">
         <Image
           src="/logo.svg"
           width={173}
           height={39}
           alt="Aura System Finance AI logo"
         />
+        <div className="sm:hidden">
+          <UserButton />
+        </div>
+      </div>
+
+      {/* Links row (mobile below, desktop inline on the left) */}
+      <div className="flex min-w-0 items-center gap-4 overflow-x-auto sm:gap-8">
         {NAV_LINKS.map(({ href, label }) => {
           const isActive = pathname === href;
 
@@ -52,13 +60,10 @@ const Navbar = () => {
           );
         })}
       </div>
-      <div className="flex items-center">
-        <div className="sm:hidden">
-          <UserButton />
-        </div>
-        <div className="hidden sm:block">
-          <UserButton showName />
-        </div>
+
+      {/* Right (desktop): user with name */}
+      <div className="hidden sm:block">
+        <UserButton showName />
       </div>
     </nav>
   );
