@@ -8,11 +8,10 @@ import { cn } from "@/app/_lib/utils";
 import { Button } from "./button";
 import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { SelectSingleEventHandler } from "react-day-picker";
 
 interface DatePickerProps {
   value?: Date;
-  onChange: SelectSingleEventHandler;
+  onChange: (date?: Date) => void;
 }
 
 export const DatePicker = ({ value, onChange }: DatePickerProps) => {
@@ -42,7 +41,7 @@ export const DatePicker = ({ value, onChange }: DatePickerProps) => {
         <Calendar
           mode="single"
           selected={value}
-          onSelect={onChange}
+          onSelect={(date) => onChange(date)}
           initialFocus
           locale={ptBR}
         />

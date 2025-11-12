@@ -26,7 +26,7 @@ const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
   return (
     <>
       <Navbar />
-      <div className="flex h-full flex-col gap-6 overflow-hidden p-4 sm:p-6">
+      <div className="flex h-full flex-col gap-6 overflow-x-hidden p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
@@ -37,13 +37,13 @@ const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
             <TimeSelect month={currentMonth} />
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-6 overflow-hidden sm:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
-          <div className="flex min-w-0 flex-col gap-6 overflow-hidden">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
+          <div className="flex min-w-0 flex-col gap-6">
             <SummaryCards
               {...dashboard}
               userCanAddTransaction={userCanAddTransaction}
             />
-            <div className="grid min-w-0 grid-cols-1 gap-6 overflow-hidden sm:grid-cols-3">
+            <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-3">
               <TransactionsPieChart {...dashboard} />
               <ExpensePerCategory
                 expensesPerCategory={dashboard.totalExpensePerCategory}

@@ -107,9 +107,6 @@ const UpsertTransactionDialog = ({
       open={dialogIsOpen}
       onOpenChange={(open) => {
         setDialogIsOpen(open);
-        if (!open) {
-          form.reset();
-        }
       }}
     >
       <DialogTrigger asChild></DialogTrigger>
@@ -249,7 +246,10 @@ const UpsertTransactionDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Data</FormLabel>
-                  <DatePicker value={field.value} onChange={field.onChange} />
+                  <DatePicker
+                    value={field.value}
+                    onChange={(date) => field.onChange(date)}
+                  />
                   <FormMessage />
                 </FormItem>
               )}

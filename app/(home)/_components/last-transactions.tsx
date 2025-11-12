@@ -20,7 +20,7 @@ interface LastTransactionsProps {
 
 const LastTransactions = ({ lastTransactions }: LastTransactionsProps) => {
   return (
-    <ScrollArea className="h-full min-w-0 rounded-md border">
+    <ScrollArea className="min-w-0 rounded-md border">
       <CardHeader className="flex-col gap-3 space-y-0 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <CardTitle className="font-bold">Últimas Transações</CardTitle>
         <Button variant="outline" className="rounded-full font-bold" asChild>

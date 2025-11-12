@@ -28,8 +28,8 @@ export const NAV_LINKS: NavLinkItem[] = [
 const Navbar = () => {
   const pathname = usePathname();
   return (
-    <nav className="flex justify-between border-b border-solid px-8 py-4">
-      <div className="flex items-center gap-10">
+    <nav className="flex justify-between border-b border-solid px-4 py-3 sm:px-8">
+      <div className="flex min-w-0 flex-wrap items-center gap-4 overflow-x-auto sm:gap-10">
         <Image
           src="/logo.svg"
           width={173}
@@ -52,7 +52,14 @@ const Navbar = () => {
           );
         })}
       </div>
-      <UserButton showName />
+      <div className="flex items-center">
+        <div className="sm:hidden">
+          <UserButton />
+        </div>
+        <div className="hidden sm:block">
+          <UserButton showName />
+        </div>
+      </div>
     </nav>
   );
 };
