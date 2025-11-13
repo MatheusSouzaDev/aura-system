@@ -43,7 +43,7 @@ const Navbar = () => {
       </div>
 
       {/* Links row (mobile below, desktop inline on the left) */}
-      <div className="flex min-w-0 items-center gap-4 overflow-x-auto sm:gap-8">
+      <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto sm:justify-start sm:gap-8">
         {NAV_LINKS.map(({ href, label }) => {
           const isActive = pathname === href;
 

@@ -12,20 +12,18 @@ const LoginPage = async () => {
   }
 
   return (
-    <div className="relative grid min-h-screen w-full grid-cols-1 bg-background lg:grid-cols-2">
-      <div className="absolute inset-0 lg:hidden">
-        <Image
-          src="/login.png"
-          alt="Aura System background"
-          fill
-          priority
-          className="object-cover"
-        />
-      </div>
+    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-background lg:flex-row">
+      <Image
+        src="/login.svg"
+        alt="Aura System background"
+        fill
+        priority
+        className="object-cover object-top"
+      />
 
-      <div className="relative mx-auto flex h-full w-full max-w-[550px] flex-col justify-center px-6 py-12 sm:px-10">
+      <div className="relative z-10 flex w-full flex-1 items-center justify-center px-6 py-6 sm:px-10 sm:py-8 lg:px-16 lg:py-0">
         <div
-          className="rounded-3xl border px-6 py-10 text-white shadow-xl sm:px-10"
+          className="w-full max-w-[780px] rounded-[32px] border px-6 py-10 text-white shadow-2xl sm:px-12 sm:py-12"
           style={{
             background: "rgba(8,42,77,0.45)",
             borderColor: "rgba(8,42,77,0.225)",
@@ -33,23 +31,30 @@ const LoginPage = async () => {
             WebkitBackdropFilter: "blur(8px)",
           }}
         >
-          <Image
-            src="/AurianLogoAlternative.svg"
-            alt="Aura System logo"
-            width={173}
-            height={39}
-            className="mb-8"
-          />
-          <h1 className="mb-4 text-3xl font-bold sm:text-4xl">Bem-vindo</h1>
-          <p className="mb-8 text-white/80">
-            A Aura System AI é uma plataforma de gestão financeira que utiliza
-            IA para monitorar suas movimentações e oferecer insights
-            personalizados, facilitando o controle do seu orçamento.
+          <div className="mb-6 flex items-center justify-center lg:hidden">
+            <Image
+              src="/AurianLogoAlternative.svg"
+              alt="Aurian logo"
+              width={360}
+              height={140}
+              priority
+            />
+          </div>
+          <h1 className="mb-6 text-3xl font-bold sm:text-[40px] sm:leading-tight">
+            Bem-vindo
+          </h1>
+          <p className="mb-10 text-base text-white/80 sm:text-lg">
+            A Aura System AI é uma plataforma inteligente de gestão financeira
+            que acompanha suas movimentações em tempo real, identifica padrões e
+            oferece insights personalizados para melhorar suas decisões, com
+            análises automatizadas e uma experiência simples e intuitiva,
+            transformando seus dados financeiros em controle real do seu
+            orçamento.
           </p>
           <SignInButton>
             <Button
-              variant="outline"
-              className="w-full border-white/40 text-white hover:bg-white/10 sm:w-auto"
+              variant="ghost"
+              className="w-full border border-[#2c5c87] bg-transparent text-white hover:bg-white/10 sm:w-auto"
             >
               <LogInIcon className="mr-2" />
               Fazer login ou criar conta
@@ -58,13 +63,14 @@ const LoginPage = async () => {
         </div>
       </div>
 
-      <div className="relative hidden h-full w-full lg:block">
+      <div className="relative z-10 hidden w-full flex-1 items-center justify-center px-12 lg:flex">
         <Image
-          src="/login.png"
-          alt="Aura System"
-          fill
+          src="/AurianLogoAlternative.svg"
+          alt="Aurian logo"
+          width={600}
+          height={200}
+          className="w-full max-w-3xl"
           priority
-          className="object-cover"
         />
       </div>
     </div>
