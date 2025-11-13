@@ -19,7 +19,7 @@ const SubscriptionPage = async () => {
   return (
     <>
       <Navbar />
-      <div className="space-y-6 px-4 py-3 sm:p-6">
+      <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6">
         <h1 className="text-2xl font-bold">Assinatura</h1>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <Card className="w-full">
