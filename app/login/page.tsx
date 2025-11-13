@@ -15,7 +15,7 @@ const LoginPage = async () => {
     <div className="grid min-h-screen w-full grid-cols-1 bg-background lg:grid-cols-2">
       <div className="mx-auto flex h-full w-full max-w-[550px] flex-col justify-center px-6 py-12 sm:px-10">
         <Image
-          src="/AurianLogo.svg"
+          src="/AurianFavicon.svg"
           alt="login"
           width={173}
           height={39}

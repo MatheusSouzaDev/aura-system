@@ -32,7 +32,7 @@ const Navbar = () => {
       {/* Top row (mobile): logo left, user button right */}
       <div className="flex items-center justify-between">
         <Image
-          src="/AurianLogo.svg"
+          src="/AurianFavicon.svg"
           width={173}
           height={39}
           alt="Aura System Finance AI logo"
