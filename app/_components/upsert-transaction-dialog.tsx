@@ -38,7 +38,7 @@ import {
   PAYMENT_METHOD_OPTIONS,
   TRANSACTION_CATEGORY_OPTIONS,
   TRANSACTION_TYPE_OPTIONS,
-} from "../_constants/transactions";
+} from "../_config/transactions";
 import { DatePicker } from "./ui/date-picker";
 import { upsertTransaction } from "../_actions/upsert-transaction";
 

@@ -1,6 +1,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { isPaidSubscriptionPlanId } from "@/app/_constants/subscription-plans";
 
 export const POST = async (request: Request) => {
   try {
@@ -39,36 +40,38 @@ export const POST = async (request: Request) => {
 
     switch (event.type) {
       case "invoice.payment_succeeded": {
-        // Handle successful payment
         const invoicePaymentSucceeded = event.data.object as Stripe.Invoice;
-        const subscription_details =
-          invoicePaymentSucceeded.parent!.subscription_details;
+        const subscriptionDetails =
+          invoicePaymentSucceeded.parent?.subscription_details ?? null;
+        const subscriptionMetadata = subscriptionDetails?.metadata ?? {};
+        const rawPlanId = subscriptionMetadata?.plan_id;
         const customer = invoicePaymentSucceeded.customer;
-        const subscription = subscription_details!.subscription;
-        const clerkUserId = subscription_details!.metadata!.clerk_user_id;
+        const subscription = subscriptionDetails?.subscription ?? null;
+        const clerkUserId = subscriptionMetadata?.clerk_user_id;
         if (!clerkUserId) {
           return NextResponse.json(
             { error: "Missing clerk_user_id" },
             { status: 400 },
           );
         }
+        const normalizedPlanId = isPaidSubscriptionPlanId(rawPlanId)
+          ? rawPlanId
+          : null;
+        const resolvedCustomerId =
+          typeof customer === "string" ? customer : (customer?.id ?? null);
         (await clerkClient()).users.updateUser(clerkUserId, {
           privateMetadata: {
-            stripeCustomerId: customer,
+            stripeCustomerId: resolvedCustomerId,
             stripeSubscriptionId: subscription,
           },
           publicMetadata: {
-            subscriptionPlan: "plus",
+            subscriptionPlan: normalizedPlanId,
           },
         });
         break;
       }
       case "customer.subscription.deleted": {
-        // Handle subscription cancellation
         const subscription = event.data.object as Stripe.Subscription;
-        // const subscription = await stripe.subscriptions.retrieve(
-        //   event.data.object.id
-        // );
         const clerkUserId = subscription.metadata.clerk_user_id;
         if (!clerkUserId) {
           return NextResponse.json(
@@ -76,7 +79,7 @@ export const POST = async (request: Request) => {
             { status: 400 },
           );
         }
-        (await clerkClient()).users.updateUser(clerkUserId, {
+        await clerkClient.users.updateUser(clerkUserId, {
           privateMetadata: {
             stripeCustomerId: null,
             stripeSubscriptionId: null,
@@ -86,24 +89,6 @@ export const POST = async (request: Request) => {
           },
         });
         break;
-
-        // const subscription = await stripe.subscriptions.retrieve(
-        //   event.data.object.id
-        // );
-        // const clerkUserId = subscription.metadata.clerk_user_id;
-        // if (!clerkUserId) {
-        //   return NextResponse.error();
-        // }
-        // (await clerkClient()).users.updateUser(clerkUserId, {
-        //   privateMetadata: {
-        //     stripeCustomerId: null,
-        //     stripeSubscriptionId: null,
-        //   },
-        //   publicMetadata: {
-        //     subscriptionPlan: null,
-        //   },
-        // });
-        // break;
       }
       default:
         console.log(`Unhandled event type: ${event.type}`);

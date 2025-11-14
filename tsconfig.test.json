@@ -28,7 +28,7 @@
     "app/_utils/**/*.tsx",
     "app/_lib/**/*.ts",
     "app/_lib/**/*.tsx",
-    "app/_constants/**/*.ts",
-    "app/_constants/**/*.tsx"
+    "app/_config/**/*.ts",
+    "app/_config/**/*.tsx"
   ]
 }

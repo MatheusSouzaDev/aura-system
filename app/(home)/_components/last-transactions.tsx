@@ -4,7 +4,7 @@ import { ScrollArea } from "@/app/_components/ui/scroll-area";
 import {
   TRANSACTION_PAYMENT_METHOD_ICONS,
   TRANSACTION_PAYMENT_METHOD_LABELS,
-} from "@/app/_constants/transactions";
+} from "@/app/_config/transactions";
 import { formatCurrency } from "@/app/_utils/currency";
 import {
   getTransactionAmountColor,

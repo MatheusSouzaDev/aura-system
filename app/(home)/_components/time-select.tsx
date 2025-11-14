@@ -7,45 +7,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/ui/select";
-import { useRouter } from "next/navigation";
+import { MONTH_OPTIONS, getRecentYears } from "@/app/_constants/time";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
-const MONTH_OPTIONS = [
-  { value: "1", label: "January" },
-  { value: "2", label: "February" },
-  { value: "3", label: "March" },
-  { value: "4", label: "April" },
-  { value: "5", label: "May" },
-  { value: "6", label: "June" },
-  { value: "7", label: "July" },
-  { value: "8", label: "August" },
-  { value: "9", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
+interface TimeSelectProps {
+  month: string;
+  year: string;
+}
 
-const TimeSelect = ({ month }: { month: string }) => {
+const TimeSelect = ({ month, year }: TimeSelectProps) => {
   const { push } = useRouter();
+  const searchParams = useSearchParams();
 
-  const handleMonthChange = (month: string) => {
-    push(`/?month=${month}`);
+  const years = useMemo(() => getRecentYears(5), []);
+
+  const updatePeriod = (nextMonth: string, nextYear: string) => {
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+
+    params.set("month", nextMonth);
+    params.set("year", nextYear);
+
+    push(`/?${params.toString()}`);
   };
 
   return (
-    <Select onValueChange={handleMonthChange} value={month}>
-      {" "}
-      {/* Agora sempre exibe o mês atual */}
-      <SelectTrigger className="w-[180px] rounded-full">
-        <SelectValue placeholder="Mês" />
-      </SelectTrigger>
-      <SelectContent>
-        {MONTH_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex flex-wrap items-center gap-2">
+      <Select
+        onValueChange={(value) => updatePeriod(value, year)}
+        value={month}
+      >
+        <SelectTrigger className="w-[160px] rounded-full">
+          <SelectValue placeholder="Mês" />
+        </SelectTrigger>
+        <SelectContent>
+          {MONTH_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select
+        onValueChange={(value) => updatePeriod(month, value)}
+        value={year}
+      >
+        <SelectTrigger className="w-[120px] rounded-full">
+          <SelectValue placeholder="Ano" />
+        </SelectTrigger>
+        <SelectContent>
+          {years.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
 

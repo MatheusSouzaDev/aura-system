@@ -9,19 +9,31 @@ import ExpensePerCategory from "./_components/expense-per-category";
 import LastTransactions from "./_components/last-transactions";
 import { canUserAddTransaction } from "../_data/can-user-add-transaction";
 import AiReportButton from "./_components/ai-report-button";
+import { getActiveSubscriptionPlan } from "../_constants/subscription-plans";
 
-const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
+interface HomeSearchParams {
+  month?: string;
+  year?: string;
+}
+
+const Home = async ({ searchParams }: { searchParams: HomeSearchParams }) => {
   const { userId } = await auth();
   if (!userId) {
     redirect("/login");
   }
 
-  const currentMonth = searchParams.month || String(new Date().getMonth() + 1);
+  const now = new Date();
+  const currentMonth = searchParams.month || String(now.getMonth() + 1);
+  const currentYear = searchParams.year || String(now.getFullYear());
   const dashboard = await getDashboard({
     month: currentMonth,
+    year: currentYear,
   });
   const userCanAddTransaction = await canUserAddTransaction();
   const user = await clerkClient.users.getUser(userId);
+  const activePlan = getActiveSubscriptionPlan(
+    (user.publicMetadata.subscriptionPlan as string | undefined) ?? undefined,
+  );
 
   return (
     <>
@@ -32,9 +44,10 @@ const Home = async ({ searchParams }: { searchParams: { month?: string } }) => {
           <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
             <AiReportButton
               month={currentMonth}
-              hasPlusPlan={user.publicMetadata.subscriptionPlan == "plus"}
+              year={currentYear}
+              hasAiReportAccess={activePlan.capabilities.aiReports}
             />
-            <TimeSelect month={currentMonth} />
+            <TimeSelect month={currentMonth} year={currentYear} />
           </div>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
