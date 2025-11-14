@@ -1,7 +1,11 @@
-import AddTransactionButton from "@/app/_components/add-transaction-button";
+import AddTransactionButton, {
+  AccountOption,
+} from "@/app/_components/add-transaction-button";
 import { Card, CardContent, CardHeader } from "@/app/_components/ui/card";
 import { formatCurrency } from "@/app/_utils/currency";
 import { ArrowDownRightIcon, ArrowUpRightIcon, MinusIcon } from "lucide-react";
+import ManageAccountsButton from "@/app/_components/manage-accounts-button";
+import { AccountSummary } from "@/app/_data/get-dashboard/types";
 
 export interface SummaryCardProps {
   icon: React.ReactNode;
@@ -11,6 +15,8 @@ export interface SummaryCardProps {
   userCanAddTransaction?: boolean;
   previousAmount?: number;
   difference?: number;
+  accountOptions?: AccountOption[];
+  accountSummaries?: AccountSummary[];
 }
 
 const SummaryCard = ({
@@ -21,6 +27,8 @@ const SummaryCard = ({
   userCanAddTransaction,
   previousAmount,
   difference,
+  accountOptions,
+  accountSummaries,
 }: SummaryCardProps) => {
   const hasHistoricalData = typeof previousAmount === "number";
   const differenceValue = typeof difference === "number" ? difference : 0;
@@ -51,7 +59,17 @@ const SummaryCard = ({
         </p>
 
         {size === "large" && (
-          <AddTransactionButton userCanAddTransaction={userCanAddTransaction} />
+          <div className="flex flex-wrap gap-3">
+            {accountSummaries && accountSummaries.length > 0 && (
+              <ManageAccountsButton accounts={accountSummaries} />
+            )}
+            {accountOptions && accountOptions.length > 0 && (
+              <AddTransactionButton
+                userCanAddTransaction={userCanAddTransaction}
+                accounts={accountOptions}
+              />
+            )}
+          </div>
         )}
       </CardContent>
 

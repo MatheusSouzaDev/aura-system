@@ -14,16 +14,41 @@ datasource db {
 }
 
 model Transaction {
-  id            String                   @id @default(uuid())
-  name          String
-  type          TransactionType
-  amount        Decimal                  @db.Decimal(10, 2)
-  category      TransactionCategory
-  paymentMethod TransactionPaymentMethod
-  date          DateTime
-  createdAt     DateTime                 @default(now())
-  updateAt      DateTime                 @updatedAt
-  userId        String
+  id                 String                   @id @default(uuid())
+  name               String
+  type               TransactionType
+  amount             Decimal                  @db.Decimal(10, 2)
+  category           TransactionCategory
+  paymentMethod      TransactionPaymentMethod
+  date               DateTime
+  executedAt         DateTime?
+  status             TransactionStatus        @default(PENDING)
+  fulfillmentType    TransactionFulfillmentType @default(IMMEDIATE)
+  installmentIndex   Int?
+  installmentCount   Int?
+  accountId          String?
+  account            Account?                 @relation(fields: [accountId], references: [id])
+  createdAt          DateTime                 @default(now())
+  updateAt           DateTime                 @updatedAt
+  userId             String
+  parentTransactionId String?
+  parentTransaction   Transaction?            @relation("Installments", fields: [parentTransactionId], references: [id])
+  installments        Transaction[]           @relation("Installments")
+}
+
+model Account {
+  id                    String   @id @default(uuid())
+  name                  String
+  color                 String?
+  includeInBalance      Boolean  @default(true)
+  includeInCashFlow     Boolean  @default(true)
+  includeInInvestments  Boolean  @default(true)
+  includeInAiReports    Boolean  @default(true)
+  includeInOverview     Boolean  @default(true)
+  userId                String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  transactions          Transaction[]
 }
 
 enum TransactionType {
@@ -52,4 +77,15 @@ enum TransactionPaymentMethod {
   CASH
   PIX
   OTHER
+}
+
+enum TransactionStatus {
+  PENDING
+  EXECUTED
+}
+
+enum TransactionFulfillmentType {
+  IMMEDIATE
+  FORECAST
+  INSTALLMENT
 }

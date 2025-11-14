@@ -12,7 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#000000",
     icons: [
       {
-        src: "/IconAurian.png",
+        src: "/IconAurian.svg",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",

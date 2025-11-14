@@ -7,6 +7,8 @@ import { MONTH_OPTIONS } from "@/app/_constants/time";
 import { clerkClient } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import { GenerateAiReportSchema, generateAiReportSchema } from "./schema";
+import { getAccountsForUserId } from "@/app/_data/accounts";
+import { TransactionStatus } from "@prisma/client";
 
 export const generateAiReport = async ({
   month,
@@ -29,15 +31,28 @@ export const generateAiReport = async ({
     throw new Error("OPENAI_API_KEY is not configured");
   }
 
+  const accounts = await getAccountsForUserId(userId);
+  const aiReportAccountIds = accounts
+    .filter((account) => account.includeInAiReports)
+    .map((account) => account.id);
+
   const transactions = await db.transaction.findMany({
     where: {
       userId,
-      date: {
+      status: TransactionStatus.EXECUTED,
+      executedAt: {
         gte: currentPeriod.start,
         lte: currentPeriod.end,
       },
+      ...(aiReportAccountIds.length
+        ? {
+            accountId: {
+              in: aiReportAccountIds,
+            },
+          }
+        : {}),
     },
-    orderBy: { date: "asc" },
+    orderBy: { executedAt: "asc" },
   });
 
   if (!transactions.length) {
@@ -50,7 +65,8 @@ export const generateAiReport = async ({
 
   const formattedTransactions = transactions
     .map((transaction) => {
-      const formattedDate = transaction.date.toLocaleDateString("pt-BR", {
+      const referenceDate = transaction.executedAt ?? transaction.date;
+      const formattedDate = referenceDate.toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",

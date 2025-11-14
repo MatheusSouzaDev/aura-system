@@ -14,6 +14,18 @@ export interface TotalExpensePerCategory {
   percentageOfTotal: number;
 }
 
+export interface AccountSummary {
+  id: string;
+  name: string;
+  color: string | null;
+  balance: number;
+  includeInBalance: boolean;
+  includeInCashFlow: boolean;
+  includeInInvestments: boolean;
+  includeInAiReports: boolean;
+  includeInOverview: boolean;
+}
+
 export interface DashboardData {
   depositTotal: number;
   expensesTotal: number;
@@ -24,4 +36,5 @@ export interface DashboardData {
   typesPercentage: TransactionPercentagePerType;
   totalExpensePerCategory: TotalExpensePerCategory[];
   lastTransactions: Transaction[];
+  accounts: AccountSummary[];
 }

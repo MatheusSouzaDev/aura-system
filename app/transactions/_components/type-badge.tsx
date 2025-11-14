@@ -3,7 +3,7 @@ import { Transaction, TransactionType } from "@prisma/client";
 import { CircleIcon } from "lucide-react";
 
 interface TransactionTypeBadgeProps {
-  transaction: Transaction;
+  transaction: Pick<Transaction, "type">;
 }
 
 const TransactionTypeBadge = ({ transaction }: TransactionTypeBadgeProps) => {

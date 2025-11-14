@@ -1,5 +1,6 @@
 interface AddTransactionButtonProps {
   userCanAddTransaction?: boolean;
+  accounts: { id: string; name: string }[];
 }
 
 const AddTransactionButton = ({

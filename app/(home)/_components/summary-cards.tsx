@@ -5,6 +5,9 @@ import {
   WalletIcon,
 } from "lucide-react";
 import SummaryCard, { SummaryCardProps } from "./summary-card";
+import { AccountSummary } from "@/app/_data/get-dashboard/types";
+import { formatCurrency } from "@/app/_utils/currency";
+import { AccountOption } from "@/app/_components/add-transaction-button";
 
 export interface SummaryCardsProps {
   balanceTotal: number;
@@ -14,6 +17,7 @@ export interface SummaryCardsProps {
   expensesTotal: number;
   investmentsTotal: number;
   userCanAddTransaction?: boolean;
+  accounts: AccountSummary[];
 }
 
 type SummaryCardData = Pick<
@@ -72,6 +76,7 @@ const SummaryCards = ({
   expensesTotal,
   investmentsTotal,
   userCanAddTransaction,
+  accounts,
 }: SummaryCardsProps) => {
   const summaryCardData: SummaryCardData = {
     balanceTotal,
@@ -84,14 +89,18 @@ const SummaryCards = ({
 
   const [primaryCard, ...secondaryCards] = SUMMARY_CARD_CONFIG;
 
-  const renderCard = ({
-    key,
-    amountField,
-    differenceField,
-    previousAmountField,
-    size,
-    ...rest
-  }: SummaryCardConfig) => (
+  const renderCard = (
+    {
+      key,
+      amountField,
+      differenceField,
+      previousAmountField,
+      size,
+      ...rest
+    }: SummaryCardConfig,
+    accountOptionsForCard: AccountOption[],
+    accountSummariesForCard: AccountSummary[],
+  ) => (
     <SummaryCard
       key={key}
       amount={summaryCardData[amountField]}
@@ -105,6 +114,8 @@ const SummaryCards = ({
       userCanAddTransaction={
         size === "large" ? userCanAddTransaction : undefined
       }
+      accountOptions={size === "large" ? accountOptionsForCard : undefined}
+      accountSummaries={size === "large" ? accountSummariesForCard : undefined}
       {...rest}
     />
   );
@@ -113,14 +124,70 @@ const SummaryCards = ({
     return null;
   }
 
+  const accountOptions: AccountOption[] = accounts.map((account) => ({
+    id: account.id,
+    name: account.name,
+  }));
+
+  const overviewAccounts =
+    accounts.filter((account) => account.includeInOverview) ?? [];
+  const accountCardsToShow =
+    overviewAccounts.length > 0 ? overviewAccounts : accounts;
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:gap-6">
-      {renderCard(primaryCard)}
+      {!!accountCardsToShow.length && (
+        <AccountBalances accounts={accountCardsToShow} />
+      )}
+      {renderCard(primaryCard, accountOptions, accounts)}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
-        {secondaryCards.map((cardConfig) => renderCard(cardConfig))}
+        {secondaryCards.map((cardConfig) =>
+          renderCard(cardConfig, accountOptions, accounts),
+        )}
       </div>
     </div>
   );
 };
 
 export default SummaryCards;
+
+interface AccountBalancesProps {
+  accounts: AccountSummary[];
+}
+
+const AccountBalances = ({ accounts }: AccountBalancesProps) => {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {accounts.map((account) => {
+        const balanceValue = account.balance ?? 0;
+
+        return (
+          <div
+            key={account.id}
+            className="rounded-xl border border-white/5 bg-white/[3%] p-4"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase text-muted-foreground">Conta</p>
+                <p className="text-lg font-semibold">{account.name}</p>
+              </div>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${account.includeInOverview ? "bg-emerald-500/10 text-emerald-400" : "bg-white/10 text-white/70"}`}
+              >
+                {account.includeInOverview ? "No dashboard" : "Oculta"}
+              </span>
+            </div>
+            <p className="mt-4 text-2xl font-bold">
+              {formatCurrency(balanceValue)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {account.includeInBalance
+                ? "Incluida no saldo mensal"
+                : "Fora do saldo mensal"}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+};

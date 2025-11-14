@@ -41,7 +41,7 @@ const Home = async ({ searchParams }: { searchParams: HomeSearchParams }) => {
       <div className="flex h-full flex-col gap-6 overflow-x-hidden p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
+          <div className="flex w-full items-center gap-3 overflow-x-auto">
             <AiReportButton
               month={currentMonth}
               year={currentYear}
