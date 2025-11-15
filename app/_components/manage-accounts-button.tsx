@@ -97,7 +97,7 @@ const ManageAccountsButton = ({ accounts }: ManageAccountsButtonProps) => {
   };
 
   const handleToggle = (
-    account: AccountSummary,
+    account: ManageableAccount,
     field: keyof AccountSummary,
     checked: boolean,
   ) => {
