@@ -36,6 +36,8 @@ const EditTransactionButton = ({
           date: new Date(transaction.date),
           amount: Number(transaction.amount),
           accountId: transaction.accountId ?? accounts[0]?.id ?? "",
+          installmentIndex: transaction.installmentIndex ?? undefined,
+          installmentCount: transaction.installmentCount ?? undefined,
         }}
         transactionId={transaction.id}
         accounts={accounts}
