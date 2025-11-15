@@ -35,6 +35,7 @@ const EditTransactionButton = ({
           ...transaction,
           date: new Date(transaction.date),
           amount: Number(transaction.amount),
+          accountId: transaction.accountId ?? accounts[0]?.id ?? "",
         }}
         transactionId={transaction.id}
         accounts={accounts}
