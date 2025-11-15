@@ -132,7 +132,7 @@ const ManageAccountsButton = ({ accounts }: ManageAccountsButtonProps) => {
     <Dialog open={dialogIsOpen} onOpenChange={setDialogIsOpen}>
       <DialogTrigger asChild>
         <Button className="rounded-full font-bold">
-          <PlusIcon className="mr-2" size={16} />
+          <PlusIcon size={16} />
           Contas
         </Button>
       </DialogTrigger>

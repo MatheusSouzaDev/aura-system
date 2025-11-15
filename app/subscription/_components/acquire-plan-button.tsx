@@ -2,9 +2,8 @@
 
 import { Button } from "@/app/_components/ui/button";
 import { createStripeCheckout } from "../_actions/create-stripe-checkout";
+import { createStripePortalSession } from "../_actions/create-stripe-portal-session";
 import { loadStripe } from "@stripe/stripe-js";
-import { useUser } from "@clerk/nextjs";
-import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { SubscriptionPlan } from "@/app/_constants/subscription-plans";
@@ -16,7 +15,6 @@ interface AcquirePlanButtonProps {
 }
 
 const AcquirePlanButton = ({ plan, isActive }: AcquirePlanButtonProps) => {
-  const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const isFreePlan = plan.type === "free";
   const isPaidPlan = isPaidSubscriptionPlan(plan);
@@ -47,6 +45,22 @@ const AcquirePlanButton = ({ plan, isActive }: AcquirePlanButtonProps) => {
     }
   };
 
+  const handleManagePlanClick = async () => {
+    try {
+      setIsLoading(true);
+      const { url } = await createStripePortalSession();
+      if (!url) {
+        throw new Error("Portal URL not received");
+      }
+      window.location.href = url;
+    } catch (error) {
+      console.error(error);
+      toast.error("Não foi possível abrir o portal do cliente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isActive) {
     if (isFreePlan) {
       return (
@@ -56,26 +70,13 @@ const AcquirePlanButton = ({ plan, isActive }: AcquirePlanButtonProps) => {
       );
     }
 
-    const customerPortalUrl =
-      process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL;
-
-    if (!customerPortalUrl) {
-      return (
-        <Button className="w-full rounded-full font-semibold" disabled>
-          Configure o portal do cliente
-        </Button>
-      );
-    }
-
     return (
-      <Button className="w-full rounded-full font-bold" asChild variant="link">
-        <Link
-          href={`${customerPortalUrl}?prefilled_email=${
-            user?.emailAddresses[0]?.emailAddress ?? ""
-          }`}
-        >
-          Gerenciar plano
-        </Link>
+      <Button
+        className="w-full rounded-full font-bold"
+        onClick={handleManagePlanClick}
+        disabled={isLoading}
+      >
+        {isLoading ? "Redirecionando..." : "Gerenciar plano"}
       </Button>
     );
   }

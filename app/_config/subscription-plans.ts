@@ -38,7 +38,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     description:
       "Comece gratuitamente e organize suas finanças com recursos essenciais.",
     features: [
-      { label: "Até 10 transações por mês", included: true },
+      { label: "Até 15 transações por mês", included: true },
       { label: "Relatórios com IA", included: false },
       { label: "Suporte prioritário", included: false },
     ],
@@ -46,7 +46,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     visible: true,
     capabilities: {
       aiReports: false,
-      transactionsLimit: 10,
+      transactionsLimit: 15,
     },
   },
   {

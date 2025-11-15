@@ -7,26 +7,11 @@ import {
 } from "@/app/_constants/subscription-plans";
 import { auth } from "@clerk/nextjs/server";
 import Stripe from "stripe";
+import { resolveAppUrl } from "../../_utils/resolve-app-url";
 
 interface CreateStripeCheckoutParams {
   planId: PaidSubscriptionPlanId;
 }
-
-const resolveAppUrl = () => {
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL;
-  }
-
-  if (process.env.APP_URL) {
-    return process.env.APP_URL;
-  }
-
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  return "http://localhost:3000";
-};
 
 export const createStripeCheckout = async ({
   planId,
@@ -57,7 +42,6 @@ export const createStripeCheckout = async ({
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
   const appUrl = resolveAppUrl();
 
   const session = await stripe.checkout.sessions.create({

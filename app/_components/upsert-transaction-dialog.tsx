@@ -18,6 +18,7 @@ import {
   TransactionCategory,
   TransactionFulfillmentType,
   TransactionPaymentMethod,
+  TransactionRecurrenceType,
   TransactionStatus,
   TransactionType,
 } from "@prisma/client";
@@ -50,22 +51,22 @@ import { AccountOption } from "./add-transaction-button";
 const formSchema = z
   .object({
     name: z.string().trim().min(1, {
-      message: "O nome Ǹ obrigat��rio",
+      message: "O nome é obrigatório",
     }),
     amount: z
-      .number({ required_error: "O valor Ǹ obrigat��rio" })
+      .number({ required_error: "O valor é obrigatório" })
       .positive({ message: "O valor deve ser positivo" }),
     type: z.nativeEnum(TransactionType, {
-      required_error: "O tipo Ǹ obrigat��rio",
+      required_error: "O tipo é obrigatório",
     }),
     category: z.nativeEnum(TransactionCategory, {
-      required_error: "A categoria Ǹ obrigat��ria",
+      required_error: "A categoria é obrigatória",
     }),
     paymentMethod: z.nativeEnum(TransactionPaymentMethod, {
-      required_error: "O mǸtodo de pagamento Ǹ obrigat��rio",
+      required_error: "O método de pagamento é obrigatório",
     }),
     date: z.date({
-      required_error: "A data Ǹ obrigat��ria",
+      required_error: "A data é obrigatória",
     }),
     accountId: z.string().min(1, "Selecione uma conta"),
     status: z.nativeEnum(TransactionStatus, {
@@ -76,23 +77,52 @@ const formSchema = z
     }),
     installmentIndex: z.number().int().positive().optional(),
     installmentCount: z.number().int().positive().optional(),
+    recurrenceType: z.nativeEnum(TransactionRecurrenceType),
+    recurrenceInterval: z.number().int().positive().optional(),
+    recurrenceEndsAt: z.date().optional(),
   })
-  .refine(
-    (data) => {
-      if (data.fulfillmentType !== TransactionFulfillmentType.INSTALLMENT) {
-        return true;
+  .superRefine((data, ctx) => {
+    if (data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT) {
+      if (
+        typeof data.installmentCount !== "number" ||
+        typeof data.installmentIndex !== "number" ||
+        data.installmentIndex > data.installmentCount
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Informe o número e total de parcelas",
+          path: ["installmentCount"],
+        });
       }
-      return (
-        typeof data.installmentCount === "number" &&
-        typeof data.installmentIndex === "number" &&
-        data.installmentIndex <= data.installmentCount
-      );
-    },
-    {
-      message: "Informe o número e total de parcelas",
-      path: ["installmentCount"],
-    },
-  );
+    }
+
+    if (data.recurrenceType !== TransactionRecurrenceType.NONE) {
+      if (!data.recurrenceEndsAt) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Defina uma data final para a recorrência",
+          path: ["recurrenceEndsAt"],
+        });
+      } else if (data.recurrenceEndsAt <= data.date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "A data final deve ser posterior à data inicial",
+          path: ["recurrenceEndsAt"],
+        });
+      }
+
+      if (
+        data.recurrenceType === TransactionRecurrenceType.CUSTOM &&
+        !data.recurrenceInterval
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Informe o intervalo em dias",
+          path: ["recurrenceInterval"],
+        });
+      }
+    }
+  });
 
 type FormSchema = z.infer<typeof formSchema>;
 
@@ -113,12 +143,39 @@ const FULFILLMENT_OPTIONS = [
     value: TransactionFulfillmentType.IMMEDIATE,
   },
   {
-    label: "Prevista / recorrente",
+    label: "Recorrente",
     value: TransactionFulfillmentType.FORECAST,
   },
   {
     label: "Parcelada",
     value: TransactionFulfillmentType.INSTALLMENT,
+  },
+];
+
+const RECURRENCE_OPTIONS = [
+  {
+    label: "Não repetir",
+    value: TransactionRecurrenceType.NONE,
+  },
+  {
+    label: "Diariamente",
+    value: TransactionRecurrenceType.DAILY,
+  },
+  {
+    label: "Semanalmente",
+    value: TransactionRecurrenceType.WEEKLY,
+  },
+  {
+    label: "Mensalmente",
+    value: TransactionRecurrenceType.MONTHLY,
+  },
+  {
+    label: "Anualmente",
+    value: TransactionRecurrenceType.YEARLY,
+  },
+  {
+    label: "Personalizado (dias)",
+    value: TransactionRecurrenceType.CUSTOM,
   },
 ];
 
@@ -142,7 +199,7 @@ const UpsertTransactionDialog = ({
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: defaultValues?.name ?? "Nome da transa��ǜo",
+      name: defaultValues?.name ?? "Nome da transação",
       amount: defaultValues?.amount ?? 50,
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
       type: defaultValues?.type ?? TransactionType.EXPENSE,
@@ -150,15 +207,22 @@ const UpsertTransactionDialog = ({
       paymentMethod:
         defaultValues?.paymentMethod ?? TransactionPaymentMethod.CASH,
       accountId: fallbackAccountId,
-      status: defaultValues?.status ?? TransactionStatus.EXECUTED,
+      status: defaultValues?.status ?? TransactionStatus.PENDING,
       fulfillmentType:
         defaultValues?.fulfillmentType ?? TransactionFulfillmentType.IMMEDIATE,
       installmentCount: defaultValues?.installmentCount,
       installmentIndex: defaultValues?.installmentIndex,
+      recurrenceType:
+        defaultValues?.recurrenceType ?? TransactionRecurrenceType.NONE,
+      recurrenceInterval: defaultValues?.recurrenceInterval,
+      recurrenceEndsAt: defaultValues?.recurrenceEndsAt
+        ? new Date(defaultValues.recurrenceEndsAt)
+        : undefined,
     },
   });
 
   const fulfillmentType = form.watch("fulfillmentType");
+  const recurrenceType = form.watch("recurrenceType");
 
   const onSubmit = async (data: FormSchema) => {
     try {
@@ -172,8 +236,17 @@ const UpsertTransactionDialog = ({
           data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT
             ? data.installmentIndex
             : undefined,
+        recurrenceInterval:
+          data.recurrenceType === TransactionRecurrenceType.CUSTOM
+            ? data.recurrenceInterval
+            : undefined,
+        recurrenceEndsAt:
+          data.recurrenceType === TransactionRecurrenceType.NONE
+            ? undefined
+            : data.recurrenceEndsAt,
         id: transactionId,
       };
+
       await upsertTransaction(payload);
       setDialogIsOpen(false);
       form.reset();
@@ -195,13 +268,15 @@ const UpsertTransactionDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isUpdate ? "Editar" : "Adicionar"} transa��ǜo
+            {isUpdate ? "Editar" : "Adicionar"} transação
           </DialogTitle>
-          <DialogDescription>Insira as informa����es abaixo</DialogDescription>
+          <DialogDescription>
+            Preencha os dados para cadastrar sua movimentação.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -209,7 +284,7 @@ const UpsertTransactionDialog = ({
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex.: Sal��rio, Aluguel..." {...field} />
+                    <Input placeholder="Ex.: Salário, aluguel..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -243,13 +318,10 @@ const UpsertTransactionDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Conta</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || fallbackAccountId}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma conta" />
+                        <SelectValue placeholder="Selecione a conta" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -290,7 +362,7 @@ const UpsertTransactionDialog = ({
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Status" />
+                          <SelectValue placeholder="Selecione o status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -387,6 +459,75 @@ const UpsertTransactionDialog = ({
 
             <FormField
               control={form.control}
+              name="recurrenceType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recorrência</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a recorrência" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {RECURRENCE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {recurrenceType === TransactionRecurrenceType.CUSTOM && (
+              <FormField
+                control={form.control}
+                name="recurrenceInterval"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Intervalo (em dias)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={field.value ?? ""}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.value
+                              ? Number(event.target.value)
+                              : undefined,
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {recurrenceType !== TransactionRecurrenceType.NONE && (
+              <FormField
+                control={form.control}
+                name="recurrenceEndsAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data final da recorrência</FormLabel>
+                    <DatePicker
+                      value={field.value}
+                      onChange={(date) => field.onChange(date)}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
               name="type"
               render={({ field }) => (
                 <FormItem>
@@ -440,11 +581,11 @@ const UpsertTransactionDialog = ({
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>MǸtodo de pagamento</FormLabel>
+                  <FormLabel>Método de pagamento</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um mǸtodo de pagamento" />
+                        <SelectValue placeholder="Selecione um método de pagamento" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

@@ -41,13 +41,19 @@ const Home = async ({ searchParams }: { searchParams: HomeSearchParams }) => {
       <div className="flex h-full flex-col gap-6 overflow-x-hidden p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex w-full items-center gap-3 overflow-x-auto">
-            <AiReportButton
+          <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto sm:ml-auto sm:w-auto sm:justify-end">
+            <div className="shrink-0">
+              <AiReportButton
+                month={currentMonth}
+                year={currentYear}
+                hasAiReportAccess={activePlan.capabilities.aiReports}
+              />
+            </div>
+            <TimeSelect
               month={currentMonth}
               year={currentYear}
-              hasAiReportAccess={activePlan.capabilities.aiReports}
+              className="min-w-0 flex-1 sm:flex-initial"
             />
-            <TimeSelect month={currentMonth} year={currentYear} />
           </div>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">

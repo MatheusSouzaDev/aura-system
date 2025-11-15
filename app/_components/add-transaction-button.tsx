@@ -43,7 +43,7 @@ const AddTransactionButton = ({
   return (
     <>
       <Button className="rounded-full font-bold" onClick={handleClick}>
-        Adicionar transa��ǜo
+        Adicionar transação
         <ArrowDownUpIcon />
       </Button>
       <UpsertTransactionDialog
@@ -56,9 +56,9 @@ const AddTransactionButton = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Limite atingido</AlertDialogTitle>
             <AlertDialogDescription>
-              Voc�� atingiu o limite de transa����es do seu plano básico. Faça
-              upgrade para continuar registrando suas movimenta����es sem
-              restri����o.
+              Você atingiu o limite de transações do seu plano básico. Faça
+              upgrade para continuar registrando suas movimentações sem
+              restrição.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

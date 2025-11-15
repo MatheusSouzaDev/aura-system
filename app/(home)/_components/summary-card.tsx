@@ -1,3 +1,5 @@
+"use client";
+
 import AddTransactionButton, {
   AccountOption,
 } from "@/app/_components/add-transaction-button";
@@ -17,6 +19,8 @@ export interface SummaryCardProps {
   difference?: number;
   accountOptions?: AccountOption[];
   accountSummaries?: AccountSummary[];
+  forecastAmount?: number;
+  forecastDifference?: number;
 }
 
 const SummaryCard = ({
@@ -29,6 +33,8 @@ const SummaryCard = ({
   difference,
   accountOptions,
   accountSummaries,
+  forecastAmount,
+  forecastDifference,
 }: SummaryCardProps) => {
   const hasHistoricalData = typeof previousAmount === "number";
   const differenceValue = typeof difference === "number" ? difference : 0;
@@ -37,6 +43,15 @@ const SummaryCard = ({
       ? "text-emerald-500"
       : differenceValue < 0
         ? "text-red-500"
+        : "text-muted-foreground";
+  const hasForecastData = typeof forecastAmount === "number";
+  const forecastDifferenceValue =
+    typeof forecastDifference === "number" ? forecastDifference : 0;
+  const forecastColor =
+    forecastDifferenceValue > differenceValue
+      ? "text-emerald-500"
+      : forecastDifferenceValue < differenceValue
+        ? "text-amber-400"
         : "text-muted-foreground";
 
   return (
@@ -73,9 +88,9 @@ const SummaryCard = ({
         )}
       </CardContent>
 
-      {size === "large" && hasHistoricalData && (
+      {size === "large" && (hasHistoricalData || hasForecastData) && (
         <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
-          <div className="flex items-start justify-between gap-6 text-sm">
+          <div className="grid gap-6 text-sm sm:grid-cols-3">
             <div className="space-y-1">
               <p className="text-muted-foreground">Saldo mês anterior</p>
               <p className="font-medium">
@@ -96,6 +111,21 @@ const SummaryCard = ({
                 </span>
               </div>
             </div>
+            {hasForecastData && (
+              <div className="flex flex-col items-end gap-1">
+                <p className="text-muted-foreground">Saldo previsto</p>
+                <div
+                  className={`flex flex-col items-end gap-1 font-semibold ${forecastColor}`}
+                >
+                  <span className="text-base">
+                    {formatCurrency(forecastAmount ?? 0)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    considerando todas as transações previstas
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       )}

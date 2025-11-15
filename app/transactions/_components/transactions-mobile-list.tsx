@@ -13,6 +13,9 @@ import {
 } from "@/app/_utils/transactions";
 import { formatCurrency } from "@/app/_utils/currency";
 import TransactionStatusToggle from "./transaction-status-toggle";
+import { TransactionStatus } from "@prisma/client";
+import EditTransactionButton from "./edit-transaction-button";
+import DeleteTransactionButton from "./delete-transaction-button";
 
 interface TransactionsMobileListProps {
   transactions: SerializableTransaction[];
@@ -37,6 +40,22 @@ const TransactionsMobileList = ({
         const accountName = transaction.accountId
           ? accountsMap.get(transaction.accountId)
           : null;
+        const isExecuted = transaction.status === TransactionStatus.EXECUTED;
+        const referenceDate =
+          isExecuted && transaction.executedAt
+            ? transaction.executedAt
+            : transaction.date;
+        const dateLabel = isExecuted ? "Efetuada em" : "Prevista para";
+        const formattedDateShort = new Date(referenceDate).toLocaleDateString(
+          "pt-BR",
+          {
+            day: "2-digit",
+            month: "short",
+          },
+        );
+        const formattedDateFull = new Date(referenceDate).toLocaleDateString(
+          "pt-BR",
+        );
 
         return (
           <div
@@ -47,10 +66,7 @@ const TransactionsMobileList = ({
               <div>
                 <p className="font-semibold">{transaction.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(transaction.date).toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "short",
-                  })}
+                  {formattedDateShort}
                   {accountName && ` • ${accountName}`}
                 </p>
               </div>
@@ -70,25 +86,23 @@ const TransactionsMobileList = ({
                 </span>
               )}
             </div>
-            <div className="mt-4 flex items-end justify-between">
-              <div className="space-y-1 text-xs text-muted-foreground">
-                <p>
-                  Prevista para{" "}
-                  {new Date(transaction.date).toLocaleDateString("pt-BR")}
+            <div className="mt-4 flex flex-col gap-3">
+              <div className="flex items-end justify-between">
+                <div className="text-xs text-muted-foreground">
+                  {dateLabel} {formattedDateFull}
+                </div>
+                <p className={`text-xl font-bold ${amountColor}`}>
+                  {getTransactionAmountPrefix(transaction.type)}
+                  {formatCurrency(amountNumber)}
                 </p>
-                {transaction.executedAt && (
-                  <p>
-                    Efetuada em{" "}
-                    {new Date(transaction.executedAt).toLocaleDateString(
-                      "pt-BR",
-                    )}
-                  </p>
-                )}
               </div>
-              <p className={`text-xl font-bold ${amountColor}`}>
-                {getTransactionAmountPrefix(transaction.type)}
-                {formatCurrency(amountNumber)}
-              </p>
+              <div className="flex gap-2">
+                <EditTransactionButton
+                  transaction={transaction}
+                  accounts={accountOptions}
+                />
+                <DeleteTransactionButton transactionId={transaction.id} />
+              </div>
             </div>
           </div>
         );

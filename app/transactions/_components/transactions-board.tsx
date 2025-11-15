@@ -9,13 +9,19 @@ import TransactionsMobileList from "./transactions-mobile-list";
 
 export type SerializableTransaction = Omit<
   Transaction,
-  "amount" | "date" | "createdAt" | "updateAt" | "executedAt"
+  | "amount"
+  | "date"
+  | "createdAt"
+  | "updateAt"
+  | "executedAt"
+  | "recurrenceEndsAt"
 > & {
   amount: number;
   date: string;
   createdAt: string;
   updateAt: string;
   executedAt: string | null;
+  recurrenceEndsAt: string | null;
 };
 
 interface TransactionsBoardProps {

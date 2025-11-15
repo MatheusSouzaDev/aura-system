@@ -13,6 +13,8 @@ export interface SummaryCardsProps {
   balanceTotal: number;
   previousMonthBalance: number;
   balanceDifference: number;
+  forecastBalance: number;
+  forecastDifference: number;
   depositTotal: number;
   expensesTotal: number;
   investmentsTotal: number;
@@ -72,6 +74,8 @@ const SummaryCards = ({
   balanceTotal,
   previousMonthBalance,
   balanceDifference,
+  forecastBalance,
+  forecastDifference,
   depositTotal,
   expensesTotal,
   investmentsTotal,
@@ -90,35 +94,43 @@ const SummaryCards = ({
   const [primaryCard, ...secondaryCards] = SUMMARY_CARD_CONFIG;
 
   const renderCard = (
-    {
+    config: SummaryCardConfig,
+    accountOptionsForCard: AccountOption[],
+    accountSummariesForCard: AccountSummary[],
+    extra?: Partial<SummaryCardProps>,
+  ) => {
+    const {
       key,
       amountField,
       differenceField,
       previousAmountField,
       size,
       ...rest
-    }: SummaryCardConfig,
-    accountOptionsForCard: AccountOption[],
-    accountSummariesForCard: AccountSummary[],
-  ) => (
-    <SummaryCard
-      key={key}
-      amount={summaryCardData[amountField]}
-      difference={
-        differenceField ? summaryCardData[differenceField] : undefined
-      }
-      previousAmount={
-        previousAmountField ? summaryCardData[previousAmountField] : undefined
-      }
-      size={size}
-      userCanAddTransaction={
-        size === "large" ? userCanAddTransaction : undefined
-      }
-      accountOptions={size === "large" ? accountOptionsForCard : undefined}
-      accountSummaries={size === "large" ? accountSummariesForCard : undefined}
-      {...rest}
-    />
-  );
+    } = config;
+
+    return (
+      <SummaryCard
+        key={key}
+        amount={summaryCardData[amountField]}
+        difference={
+          differenceField ? summaryCardData[differenceField] : undefined
+        }
+        previousAmount={
+          previousAmountField ? summaryCardData[previousAmountField] : undefined
+        }
+        size={size}
+        userCanAddTransaction={
+          size === "large" ? userCanAddTransaction : undefined
+        }
+        accountOptions={size === "large" ? accountOptionsForCard : undefined}
+        accountSummaries={
+          size === "large" ? accountSummariesForCard : undefined
+        }
+        {...extra}
+        {...rest}
+      />
+    );
+  };
 
   if (!primaryCard) {
     return null;
@@ -136,10 +148,13 @@ const SummaryCards = ({
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:gap-6">
+      {renderCard(primaryCard, accountOptions, accounts, {
+        forecastAmount: forecastBalance,
+        forecastDifference,
+      })}
       {!!accountCardsToShow.length && (
         <AccountBalances accounts={accountCardsToShow} />
       )}
-      {renderCard(primaryCard, accountOptions, accounts)}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
         {secondaryCards.map((cardConfig) =>
           renderCard(cardConfig, accountOptions, accounts),

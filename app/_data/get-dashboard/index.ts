@@ -21,11 +21,19 @@ const calculatePercentage = (value: number, total: number) => {
   return Math.round((value / total) * 100);
 };
 
+const getSignedAmount = (type: TransactionType, amount: number) => {
+  if (type === TransactionType.DEPOSIT) {
+    return amount;
+  }
+
+  return -amount;
+};
+
 export const getDashboard = async ({
   month,
   year,
 }: GetDashboardParams = {}): Promise<DashboardData> => {
-  const { currentPeriod, previousPeriod, userId } = await getDashboardContext({
+  const { currentPeriod, userId } = await getDashboardContext({
     month,
     year,
   });
@@ -66,12 +74,11 @@ export const getDashboard = async ({
     },
   };
 
-  const previousExecutedWhere = {
+  const executedBeforeCurrentWhere = {
     userId,
     status: TransactionStatus.EXECUTED,
     executedAt: {
-      gte: previousPeriod.start,
-      lte: previousPeriod.end,
+      lt: currentPeriod.start,
     },
   };
 
@@ -89,6 +96,7 @@ export const getDashboard = async ({
     previousBalanceExpensesAggregate,
     previousBalanceInvestmentsAggregate,
     accountBalanceGroups,
+    forecastTransactionsInPeriod,
   ] = await Promise.all([
     db.transaction.aggregate({
       where: {
@@ -170,7 +178,7 @@ export const getDashboard = async ({
     }),
     db.transaction.aggregate({
       where: {
-        ...previousExecutedWhere,
+        ...executedBeforeCurrentWhere,
         type: TransactionType.DEPOSIT,
         ...buildAccountFilter(balanceAccountIds),
       },
@@ -178,7 +186,7 @@ export const getDashboard = async ({
     }),
     db.transaction.aggregate({
       where: {
-        ...previousExecutedWhere,
+        ...executedBeforeCurrentWhere,
         type: TransactionType.EXPENSE,
         ...buildAccountFilter(balanceAccountIds),
       },
@@ -186,7 +194,7 @@ export const getDashboard = async ({
     }),
     db.transaction.aggregate({
       where: {
-        ...previousExecutedWhere,
+        ...executedBeforeCurrentWhere,
         type: TransactionType.INVESTMENT,
         ...buildAccountFilter(balanceAccountIds),
       },
@@ -199,6 +207,16 @@ export const getDashboard = async ({
         status: TransactionStatus.EXECUTED,
       },
       _sum: { amount: true },
+    }),
+    db.transaction.findMany({
+      where: {
+        userId,
+        status: TransactionStatus.PENDING,
+        date: {
+          gte: currentPeriod.start,
+          lte: currentPeriod.end,
+        },
+      },
     }),
   ]);
 
@@ -232,6 +250,13 @@ export const getDashboard = async ({
   const balanceDifference =
     balanceDepositTotal - balanceExpensesTotal - balanceInvestmentsTotal;
   const balanceTotal = previousMonthBalance + balanceDifference;
+  const forecastPendingImpact = forecastTransactionsInPeriod.reduce(
+    (total, transaction) =>
+      total + getSignedAmount(transaction.type, Number(transaction.amount)),
+    0,
+  );
+  const forecastDifference = balanceDifference + forecastPendingImpact;
+  const forecastBalance = previousMonthBalance + forecastDifference;
 
   const accountTotals = accountBalanceGroups.reduce<
     Record<
@@ -326,6 +351,8 @@ export const getDashboard = async ({
     balanceTotal,
     previousMonthBalance,
     balanceDifference,
+    forecastBalance,
+    forecastDifference,
     typesPercentage,
     totalExpensePerCategory,
     lastTransactions: safeLastTransactions,

@@ -94,9 +94,9 @@ const TransactionStatusToggle = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Data diferente da prevista</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta transa����o estava marcada para{" "}
+              Esta transação estava marcada para{" "}
               {new Date(transaction.date).toLocaleDateString("pt-BR")}. Deseja
-              usar a data atual como data de efetua����o?
+              usar a data atual como data de efetuação?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col gap-2 sm:flex-row">

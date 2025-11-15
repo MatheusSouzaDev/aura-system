@@ -38,6 +38,11 @@ const EditTransactionButton = ({
           accountId: transaction.accountId ?? accounts[0]?.id ?? "",
           installmentIndex: transaction.installmentIndex ?? undefined,
           installmentCount: transaction.installmentCount ?? undefined,
+          recurrenceType: transaction.recurrenceType,
+          recurrenceInterval: transaction.recurrenceInterval ?? undefined,
+          recurrenceEndsAt: transaction.recurrenceEndsAt
+            ? new Date(transaction.recurrenceEndsAt)
+            : undefined,
         }}
         transactionId={transaction.id}
         accounts={accounts}

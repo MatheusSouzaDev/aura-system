@@ -33,6 +33,8 @@ export interface DashboardData {
   balanceTotal: number;
   previousMonthBalance: number;
   balanceDifference: number;
+  forecastBalance: number;
+  forecastDifference: number;
   typesPercentage: TransactionPercentagePerType;
   totalExpensePerCategory: TotalExpensePerCategory[];
   lastTransactions: Transaction[];

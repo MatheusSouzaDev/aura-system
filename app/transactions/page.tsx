@@ -61,6 +61,9 @@ const TransactionsPage = async () => {
       : null,
     createdAt: transaction.createdAt.toISOString(),
     updateAt: transaction.updateAt.toISOString(),
+    recurrenceEndsAt: transaction.recurrenceEndsAt
+      ? transaction.recurrenceEndsAt.toISOString()
+      : null,
   }));
 
   return (

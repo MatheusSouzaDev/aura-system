@@ -34,6 +34,9 @@ model Transaction {
   parentTransactionId String?
   parentTransaction   Transaction?            @relation("Installments", fields: [parentTransactionId], references: [id])
   installments        Transaction[]           @relation("Installments")
+  recurrenceType     TransactionRecurrenceType @default(NONE)
+  recurrenceInterval Int?
+  recurrenceEndsAt   DateTime?
 }
 
 model Account {
@@ -88,4 +91,13 @@ enum TransactionFulfillmentType {
   IMMEDIATE
   FORECAST
   INSTALLMENT
+}
+
+enum TransactionRecurrenceType {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  CUSTOM
 }

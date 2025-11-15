@@ -2,21 +2,68 @@ import {
   TransactionCategory,
   TransactionFulfillmentType,
   TransactionPaymentMethod,
+  TransactionRecurrenceType,
   TransactionStatus,
   TransactionType,
 } from "@prisma/client";
 import { z } from "zod";
 
-export const upsertTransactionSchema = z.object({
-  name: z.string().trim().min(1),
-  amount: z.number().positive(),
-  type: z.nativeEnum(TransactionType),
-  category: z.nativeEnum(TransactionCategory),
-  paymentMethod: z.nativeEnum(TransactionPaymentMethod),
-  date: z.date(),
-  accountId: z.string().uuid(),
-  status: z.nativeEnum(TransactionStatus),
-  fulfillmentType: z.nativeEnum(TransactionFulfillmentType),
-  installmentIndex: z.number().min(1).optional(),
-  installmentCount: z.number().min(1).optional(),
-});
+export const upsertTransactionSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    amount: z.number().positive(),
+    type: z.nativeEnum(TransactionType),
+    category: z.nativeEnum(TransactionCategory),
+    paymentMethod: z.nativeEnum(TransactionPaymentMethod),
+    date: z.date(),
+    accountId: z.string().uuid(),
+    status: z.nativeEnum(TransactionStatus),
+    fulfillmentType: z.nativeEnum(TransactionFulfillmentType),
+    installmentIndex: z.number().min(1).optional(),
+    installmentCount: z.number().min(1).optional(),
+    recurrenceType: z.nativeEnum(TransactionRecurrenceType),
+    recurrenceInterval: z.number().int().min(1).optional().nullable(),
+    recurrenceEndsAt: z.date().optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT) {
+      if (
+        typeof data.installmentCount !== "number" ||
+        typeof data.installmentIndex !== "number" ||
+        data.installmentIndex > data.installmentCount
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Informe o número e total de parcelas",
+          path: ["installmentCount"],
+        });
+      }
+    }
+
+    if (data.recurrenceType !== TransactionRecurrenceType.NONE) {
+      if (!data.recurrenceEndsAt) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Defina uma data final para a recorrência",
+          path: ["recurrenceEndsAt"],
+        });
+      } else if (data.recurrenceEndsAt <= data.date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "A data final deve ser posterior à data inicial",
+          path: ["recurrenceEndsAt"],
+        });
+      }
+
+      if (
+        data.recurrenceType === TransactionRecurrenceType.CUSTOM &&
+        !data.recurrenceInterval
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Informe o intervalo em dias",
+          path: ["recurrenceInterval"],
+        });
+      }
+    }
+  });

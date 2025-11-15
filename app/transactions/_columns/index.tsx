@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { ColumnDef } from "@tanstack/react-table";
 import { SerializableTransaction } from "../_components/transactions-board";
@@ -16,6 +16,7 @@ import EditTransactionButton from "../_components/edit-transaction-button";
 import DeleteTransactionButton from "../_components/delete-transaction-button";
 import TransactionStatusToggle from "../_components/transaction-status-toggle";
 import { AccountOption } from "@/app/_components/add-transaction-button";
+import { TransactionStatus } from "@prisma/client";
 
 export const createTransactionColumns = (
   accounts: AccountOption[],
@@ -39,19 +40,37 @@ export const createTransactionColumns = (
   },
   {
     accessorKey: "paymentMethod",
-    header: "M��todo de Pagamento",
+    header: "MÃ©todo de Pagamento",
     cell: ({ row: { original: transaction } }) =>
       TRANSACTION_PAYMENT_METHOD_LABELS[transaction.paymentMethod],
   },
   {
     accessorKey: "date",
-    header: "Data prevista",
-    cell: ({ row: { original: transaction } }) =>
-      new Date(transaction.date).toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }),
+    header: "Data",
+    cell: ({ row: { original: transaction } }) => {
+      const isExecuted = transaction.status === TransactionStatus.EXECUTED;
+      const referenceDate =
+        isExecuted && transaction.executedAt
+          ? transaction.executedAt
+          : transaction.date;
+      const formattedDate = new Date(referenceDate).toLocaleDateString(
+        "pt-BR",
+        {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        },
+      );
+
+      return (
+        <div className="flex flex-col">
+          <span>{formattedDate}</span>
+          <span className="text-xs text-muted-foreground">
+            {isExecuted ? "Efetuada" : "Prevista"}
+          </span>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "amount",

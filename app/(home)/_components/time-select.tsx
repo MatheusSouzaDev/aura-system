@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Select,
@@ -14,9 +14,10 @@ import { useMemo } from "react";
 interface TimeSelectProps {
   month: string;
   year: string;
+  className?: string;
 }
 
-const TimeSelect = ({ month, year }: TimeSelectProps) => {
+const TimeSelect = ({ month, year, className }: TimeSelectProps) => {
   const { push } = useRouter();
   const searchParams = useSearchParams();
 
@@ -32,37 +33,43 @@ const TimeSelect = ({ month, year }: TimeSelectProps) => {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Select
-        onValueChange={(value) => updatePeriod(value, year)}
-        value={month}
-      >
-        <SelectTrigger className="w-[160px] rounded-full">
-          <SelectValue placeholder="Mês" />
-        </SelectTrigger>
-        <SelectContent>
-          {MONTH_OPTIONS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select
-        onValueChange={(value) => updatePeriod(month, value)}
-        value={year}
-      >
-        <SelectTrigger className="w-[120px] rounded-full">
-          <SelectValue placeholder="Ano" />
-        </SelectTrigger>
-        <SelectContent>
-          {years.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div
+      className={`flex w-full flex-nowrap items-center gap-2 ${className ?? ""}`}
+    >
+      <div className="min-w-0 flex-1 sm:flex-none">
+        <Select
+          onValueChange={(value) => updatePeriod(value, year)}
+          value={month}
+        >
+          <SelectTrigger className="w-full rounded-full sm:w-[160px]">
+            <SelectValue placeholder="MÃªs" />
+          </SelectTrigger>
+          <SelectContent>
+            {MONTH_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="min-w-0 flex-1 sm:flex-none">
+        <Select
+          onValueChange={(value) => updatePeriod(month, value)}
+          value={year}
+        >
+          <SelectTrigger className="w-full rounded-full sm:w-[120px]">
+            <SelectValue placeholder="Ano" />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };
