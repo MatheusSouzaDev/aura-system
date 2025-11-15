@@ -90,7 +90,7 @@ const ManageAccountsButton = ({ accounts }: ManageAccountsButtonProps) => {
     startTransition(async () => {
       await saveAccount({
         name: newAccountName.trim(),
-        color: newAccountColor || undefined,
+        color: newAccountColor ? newAccountColor : null,
       });
       resetForm();
     });
@@ -105,7 +105,7 @@ const ManageAccountsButton = ({ accounts }: ManageAccountsButtonProps) => {
       await saveAccount({
         id: account.id,
         name: account.name,
-        color: account.color ?? undefined,
+        color: account.color ?? null,
         includeInBalance:
           field === "includeInBalance" ? checked : account.includeInBalance,
         includeInCashFlow:
