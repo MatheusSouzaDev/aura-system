@@ -4,30 +4,43 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import Stripe from "stripe";
 import { resolveAppUrl } from "../../_utils/resolve-app-url";
 
-export const createStripePortalSession = async () => {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+interface StripePortalSessionResult {
+  url: string | null;
+  error?: string;
+}
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error("Stripe secret key not found");
-  }
+export const createStripePortalSession =
+  async (): Promise<StripePortalSessionResult> => {
+    const { userId } = await auth();
+    if (!userId) {
+      return {
+        url: null,
+        error: "Você precisa estar autenticado para gerenciar o plano.",
+      };
+    }
 
-  const user = await clerkClient.users.getUser(userId);
-  const stripeCustomerId = user.privateMetadata?.stripeCustomerId;
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return { url: null, error: "Configuração da Stripe ausente." };
+    }
 
-  if (typeof stripeCustomerId !== "string" || !stripeCustomerId.length) {
-    throw new Error("Stripe customer not found");
-  }
+    const user = await clerkClient.users.getUser(userId);
+    const stripeCustomerId = user.privateMetadata?.stripeCustomerId;
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const appUrl = resolveAppUrl();
+    if (typeof stripeCustomerId !== "string" || !stripeCustomerId.length) {
+      return {
+        url: null,
+        error:
+          "Não encontramos seu cliente na Stripe. Tente assinar novamente ou contate o suporte.",
+      };
+    }
 
-  const session = await stripe.billingPortal.sessions.create({
-    customer: stripeCustomerId,
-    return_url: `${appUrl}/subscription`,
-  });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const appUrl = resolveAppUrl();
 
-  return { url: session.url };
-};
+    const session = await stripe.billingPortal.sessions.create({
+      customer: stripeCustomerId,
+      return_url: `${appUrl}/subscription`,
+    });
+
+    return { url: session.url };
+  };
