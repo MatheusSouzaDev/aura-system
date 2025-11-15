@@ -120,9 +120,6 @@ const SummaryCard = ({
                   <span className="text-base">
                     {formatCurrency(forecastAmount ?? 0)}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    considerando todas as transações previstas
-                  </span>
                 </div>
               </div>
             )}
