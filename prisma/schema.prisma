@@ -26,6 +26,7 @@ model Transaction {
   fulfillmentType    TransactionFulfillmentType @default(IMMEDIATE)
   installmentIndex   Int?
   installmentCount   Int?
+  installmentValueIsTotal Boolean         @default(false)
   accountId          String?
   account            Account?                 @relation(fields: [accountId], references: [id])
   createdAt          DateTime                 @default(now())
@@ -37,6 +38,7 @@ model Transaction {
   recurrenceType     TransactionRecurrenceType @default(NONE)
   recurrenceInterval Int?
   recurrenceEndsAt   DateTime?
+  recurrenceSkipWeekdays String?
 }
 
 model Account {

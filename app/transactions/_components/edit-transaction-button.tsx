@@ -17,6 +17,11 @@ const EditTransactionButton = ({
   accounts,
 }: EditTransactionButtonProps) => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
+  const baseAmount = Number(transaction.amount);
+  const normalizedAmount =
+    transaction.installmentValueIsTotal && transaction.installmentCount
+      ? baseAmount * transaction.installmentCount
+      : baseAmount;
 
   return (
     <>
@@ -34,15 +39,19 @@ const EditTransactionButton = ({
         defaultValues={{
           ...transaction,
           date: new Date(transaction.date),
-          amount: Number(transaction.amount),
+          amount: normalizedAmount,
           accountId: transaction.accountId ?? accounts[0]?.id ?? "",
           installmentIndex: transaction.installmentIndex ?? undefined,
           installmentCount: transaction.installmentCount ?? undefined,
+          installmentValueIsTotal: transaction.installmentValueIsTotal ?? false,
           recurrenceType: transaction.recurrenceType,
           recurrenceInterval: transaction.recurrenceInterval ?? undefined,
           recurrenceEndsAt: transaction.recurrenceEndsAt
             ? new Date(transaction.recurrenceEndsAt)
             : undefined,
+          recurrenceSkipWeekdays: transaction.recurrenceSkipWeekdays
+            ? JSON.parse(transaction.recurrenceSkipWeekdays)
+            : [],
         }}
         transactionId={transaction.id}
         accounts={accounts}

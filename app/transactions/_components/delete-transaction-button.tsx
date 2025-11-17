@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +15,7 @@ import {
 import { Button } from "@/app/_components/ui/button";
 import { TrashIcon } from "lucide-react";
 import { deleteTransaction } from "../_actions/delete-transaction";
+import { DeleteTransactionScope } from "../_actions/delete-transaction/schema";
 import { toast } from "sonner";
 
 interface DeleteTransactionButtonProps {
@@ -21,18 +25,24 @@ interface DeleteTransactionButtonProps {
 const DeleteTransactionButton = ({
   transactionId,
 }: DeleteTransactionButtonProps) => {
-  const handleConfirmDeleteClick = async () => {
-    try {
-      await deleteTransaction({ transactionId });
-      toast.success("Transação deletada com sucesso!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao deletar transação. Tente novamente mais tarde.");
-    }
+  const [dialogIsOpen, setDialogIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const handleDelete = (scope: DeleteTransactionScope) => {
+    startTransition(async () => {
+      try {
+        await deleteTransaction({ transactionId, scope });
+        toast.success("Transação deletada com sucesso!");
+        setDialogIsOpen(false);
+      } catch (error) {
+        console.error(error);
+        toast.error("Erro ao deletar transação. Tente novamente mais tarde.");
+      }
+    });
   };
 
   return (
-    <AlertDialog>
+    <AlertDialog open={dialogIsOpen} onOpenChange={setDialogIsOpen}>
       <AlertDialogTrigger asChild>
         <Button variant="ghost" size="icon" className="text-muted-foreground">
           <TrashIcon />
@@ -44,14 +54,35 @@ const DeleteTransactionButton = ({
             Você deseja realmente deletar essa transação?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Essa ação não pode ser desfeita.
+            Escolha se quer remover apenas esta ocorrência ou toda a série.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirmDeleteClick}>
-            Continuar
-          </AlertDialogAction>
+        <AlertDialogFooter className="flex flex-col gap-3">
+          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <div className="grid w-full gap-2 sm:grid-cols-3">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => handleDelete("CURRENT")}
+            >
+              Somente esta
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => handleDelete("FORWARD")}
+            >
+              Esta e próximas
+            </Button>
+            <AlertDialogAction
+              disabled={isPending}
+              onClick={() => handleDelete("ALL")}
+            >
+              Todas
+            </AlertDialogAction>
+          </div>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

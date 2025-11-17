@@ -90,15 +90,15 @@ const SummaryCard = ({
 
       {size === "large" && (hasHistoricalData || hasForecastData) && (
         <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
-          <div className="flex flex-wrap gap-4 text-sm sm:items-center">
-            <div className="flex min-w-[180px] flex-1 flex-col gap-1">
+          <div className="flex flex-wrap justify-between text-sm sm:items-center">
+            <div className="flex flex-1 flex-col gap-1">
               <p className="text-muted-foreground">Saldo Inicial</p>
               <p className="font-medium">
                 {formatCurrency(previousAmount ?? 0)}
               </p>
             </div>
-            <div className="flex min-w-[220px] flex-1 flex-col gap-3">
-              <div className="flex items-center justify-between gap-4">
+            <div className="flex gap-4">
+              <div className="flex items-end gap-1">
                 <p className="text-muted-foreground">Diferença</p>
                 <div
                   className={`flex items-center gap-2 font-semibold ${differenceColor}`}
@@ -113,7 +113,7 @@ const SummaryCard = ({
                 </div>
               </div>
               {hasForecastData && (
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-end gap-1">
                   <p className="text-muted-foreground">Saldo previsto</p>
                   <div
                     className={`flex flex-col items-end font-semibold ${forecastColor}`}

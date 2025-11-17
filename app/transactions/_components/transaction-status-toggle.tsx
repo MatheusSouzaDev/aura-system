@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { TransactionStatus } from "@prisma/client";
 import { CheckIcon, Loader2Icon } from "lucide-react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -13,6 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/app/_components/ui/alert-dialog";
+import { Button } from "@/app/_components/ui/button";
+import { DatePicker } from "@/app/_components/ui/date-picker";
 import { updateTransactionStatus } from "@/app/_actions/update-transaction-status";
 import { SerializableTransaction } from "./transactions-board";
 
@@ -25,18 +26,37 @@ const TransactionStatusToggle = ({
   transaction,
   size = "md",
 }: TransactionStatusToggleProps) => {
+  const plannedDate = useMemo(
+    () => new Date(transaction.date),
+    [transaction.date],
+  );
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [customDate, setCustomDate] = useState<Date | undefined>(plannedDate);
   const [isPending, startTransition] = useTransition();
   const isExecuted = transaction.status === TransactionStatus.EXECUTED;
   const shouldAskForDate = useMemo(() => {
-    const plannedDate = new Date(transaction.date);
     const now = new Date();
     return (
       plannedDate.getFullYear() !== now.getFullYear() ||
       plannedDate.getMonth() !== now.getMonth() ||
       plannedDate.getDate() !== now.getDate()
     );
-  }, [transaction.date]);
+  }, [plannedDate]);
+
+  useEffect(() => {
+    setCustomDate(plannedDate);
+  }, [plannedDate]);
+
+  useEffect(() => {
+    if (confirmOpen) {
+      setCustomDate(plannedDate);
+    }
+  }, [confirmOpen, plannedDate]);
+
+  const plannedDateLabel = useMemo(
+    () => plannedDate.toLocaleDateString("pt-BR"),
+    [plannedDate],
+  );
 
   const handleToggle = () => {
     if (isExecuted) {
@@ -51,19 +71,20 @@ const TransactionStatusToggle = ({
 
     if (shouldAskForDate) {
       setConfirmOpen(true);
+      setCustomDate(plannedDate);
       return;
     }
 
-    markAsExecuted(false);
+    markAsExecuted(plannedDate);
   };
 
-  const markAsExecuted = (useCurrentDate: boolean) => {
+  const markAsExecuted = (executedAt: Date) => {
     setConfirmOpen(false);
     startTransition(async () => {
       await updateTransactionStatus({
         id: transaction.id,
         status: TransactionStatus.EXECUTED,
-        useCurrentDate,
+        executedAt,
       });
     });
   };
@@ -92,26 +113,50 @@ const TransactionStatusToggle = ({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Data diferente da prevista</AlertDialogTitle>
+            <AlertDialogTitle>Escolha a data de efetuação</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta transação estava marcada para{" "}
-              {new Date(transaction.date).toLocaleDateString("pt-BR")}. Deseja
-              usar a data atual como data de efetuação?
+              Esta transação estava prevista para {plannedDateLabel}. Como você
+              deseja registrá-la?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-row">
-            <AlertDialogCancel
-              onClick={() => markAsExecuted(false)}
-              className="w-full"
-            >
-              Usar data prevista
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => markAsExecuted(true)}
-              className="w-full"
-            >
-              Usar data atual
-            </AlertDialogAction>
+          <AlertDialogFooter className="flex flex-col gap-3">
+            <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+            <div className="grid w-full gap-2 sm:grid-cols-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => markAsExecuted(plannedDate)}
+              >
+                Usar data prevista
+              </Button>
+              <Button
+                type="button"
+                disabled={isPending}
+                onClick={() => markAsExecuted(new Date())}
+              >
+                Usar data atual
+              </Button>
+            </div>
+            <div className="rounded-lg border border-white/10 p-4">
+              <p className="text-sm font-medium text-white">
+                Escolher outra data
+              </p>
+              <div className="mt-2">
+                <DatePicker
+                  value={customDate}
+                  onChange={(date) => setCustomDate(date ?? undefined)}
+                />
+              </div>
+              <Button
+                type="button"
+                className="mt-3 w-full"
+                disabled={!customDate || isPending}
+                onClick={() => customDate && markAsExecuted(customDate)}
+              >
+                Confirmar data personalizada
+              </Button>
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

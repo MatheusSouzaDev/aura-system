@@ -9,7 +9,7 @@ import { TransactionStatus } from "@prisma/client";
 export const updateTransactionStatus = async (input: {
   id: string;
   status: TransactionStatus;
-  useCurrentDate?: boolean;
+  executedAt?: Date;
 }) => {
   const data = updateTransactionStatusSchema.parse(input);
   const { userId } = await auth();
@@ -31,9 +31,7 @@ export const updateTransactionStatus = async (input: {
 
   const executedAt =
     data.status === TransactionStatus.EXECUTED
-      ? data.useCurrentDate
-        ? new Date()
-        : transaction.date
+      ? (data.executedAt ?? transaction.date)
       : null;
 
   await db.transaction.update({

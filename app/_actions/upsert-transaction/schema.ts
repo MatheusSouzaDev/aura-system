@@ -21,9 +21,14 @@ export const upsertTransactionSchema = z
     fulfillmentType: z.nativeEnum(TransactionFulfillmentType),
     installmentIndex: z.number().min(1).optional(),
     installmentCount: z.number().min(1).optional(),
+    installmentValueIsTotal: z.boolean().optional(),
     recurrenceType: z.nativeEnum(TransactionRecurrenceType),
     recurrenceInterval: z.number().int().min(1).optional().nullable(),
     recurrenceEndsAt: z.date().optional().nullable(),
+    recurrenceSkipWeekdays: z
+      .array(z.number().int().min(0).max(6))
+      .optional()
+      .nullable(),
   })
   .superRefine((data, ctx) => {
     if (data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT) {
@@ -40,30 +45,36 @@ export const upsertTransactionSchema = z
       }
     }
 
-    if (data.recurrenceType !== TransactionRecurrenceType.NONE) {
-      if (!data.recurrenceEndsAt) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Defina uma data final para a recorrência",
-          path: ["recurrenceEndsAt"],
-        });
-      } else if (data.recurrenceEndsAt <= data.date) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "A data final deve ser posterior à data inicial",
-          path: ["recurrenceEndsAt"],
-        });
-      }
+    if (data.fulfillmentType !== TransactionFulfillmentType.FORECAST) {
+      return;
+    }
 
-      if (
-        data.recurrenceType === TransactionRecurrenceType.CUSTOM &&
-        !data.recurrenceInterval
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Informe o intervalo em dias",
-          path: ["recurrenceInterval"],
-        });
-      }
+    if (data.recurrenceType === TransactionRecurrenceType.NONE) {
+      return;
+    }
+
+    if (!data.recurrenceEndsAt) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Defina uma data final para a recorrência",
+        path: ["recurrenceEndsAt"],
+      });
+    } else if (data.recurrenceEndsAt <= data.date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A data final deve ser posterior à data inicial",
+        path: ["recurrenceEndsAt"],
+      });
+    }
+
+    if (
+      data.recurrenceType === TransactionRecurrenceType.CUSTOM &&
+      !data.recurrenceInterval
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe o intervalo em dias",
+        path: ["recurrenceInterval"],
+      });
     }
   });

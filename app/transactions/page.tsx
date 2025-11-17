@@ -64,6 +64,7 @@ const TransactionsPage = async () => {
     recurrenceEndsAt: transaction.recurrenceEndsAt
       ? transaction.recurrenceEndsAt.toISOString()
       : null,
+    recurrenceSkipWeekdays: transaction.recurrenceSkipWeekdays,
   }));
 
   return (

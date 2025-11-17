@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { useMemo } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -48,25 +49,53 @@ import { DatePicker } from "./ui/date-picker";
 import { upsertTransaction } from "../_actions/upsert-transaction";
 import { AccountOption } from "./add-transaction-button";
 
+const WEEKDAY_OPTIONS = [
+  { value: 0, label: "Dom" },
+  { value: 1, label: "Seg" },
+  { value: 2, label: "Ter" },
+  { value: 3, label: "Qua" },
+  { value: 4, label: "Qui" },
+  { value: 5, label: "Sex" },
+  { value: 6, label: "SÃ¡b" },
+];
+
+type RecurrencePreset =
+  | "daily_all"
+  | "daily_skip_sunday"
+  | "daily_custom"
+  | TransactionRecurrenceType;
+
+const RECURRENCE_PRESET_OPTIONS: { label: string; value: RecurrencePreset }[] =
+  [
+    { label: "NÃ£o repetir", value: TransactionRecurrenceType.NONE },
+    { label: "Diariamente", value: "daily_all" },
+    { label: "Diariamente (exceto domingos)", value: "daily_skip_sunday" },
+    { label: "Diariamente (personalizado)", value: "daily_custom" },
+    { label: "Semanalmente", value: TransactionRecurrenceType.WEEKLY },
+    { label: "Mensalmente", value: TransactionRecurrenceType.MONTHLY },
+    { label: "Anualmente", value: TransactionRecurrenceType.YEARLY },
+    { label: "Personalizado (dias)", value: TransactionRecurrenceType.CUSTOM },
+  ];
+
 const formSchema = z
   .object({
     name: z.string().trim().min(1, {
-      message: "O nome é obrigatório",
+      message: "O nome Ã© obrigatÃ³rio",
     }),
     amount: z
-      .number({ required_error: "O valor é obrigatório" })
+      .number({ required_error: "O valor Ã© obrigatÃ³rio" })
       .positive({ message: "O valor deve ser positivo" }),
     type: z.nativeEnum(TransactionType, {
-      required_error: "O tipo é obrigatório",
+      required_error: "O tipo Ã© obrigatÃ³rio",
     }),
     category: z.nativeEnum(TransactionCategory, {
-      required_error: "A categoria é obrigatória",
+      required_error: "A categoria Ã© obrigatÃ³ria",
     }),
     paymentMethod: z.nativeEnum(TransactionPaymentMethod, {
-      required_error: "O método de pagamento é obrigatório",
+      required_error: "O mÃ©todo de pagamento Ã© obrigatÃ³rio",
     }),
     date: z.date({
-      required_error: "A data é obrigatória",
+      required_error: "A data Ã© obrigatÃ³ria",
     }),
     accountId: z.string().min(1, "Selecione uma conta"),
     status: z.nativeEnum(TransactionStatus, {
@@ -77,9 +106,11 @@ const formSchema = z
     }),
     installmentIndex: z.number().int().positive().optional(),
     installmentCount: z.number().int().positive().optional(),
+    installmentValueIsTotal: z.boolean().optional(),
     recurrenceType: z.nativeEnum(TransactionRecurrenceType),
     recurrenceInterval: z.number().int().positive().optional(),
     recurrenceEndsAt: z.date().optional(),
+    recurrenceSkipWeekdays: z.array(z.number().int().min(0).max(6)).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT) {
@@ -90,37 +121,43 @@ const formSchema = z
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Informe o número e total de parcelas",
+          message: "Informe o nÃºmero e total de parcelas",
           path: ["installmentCount"],
         });
       }
     }
 
-    if (data.recurrenceType !== TransactionRecurrenceType.NONE) {
-      if (!data.recurrenceEndsAt) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Defina uma data final para a recorrência",
-          path: ["recurrenceEndsAt"],
-        });
-      } else if (data.recurrenceEndsAt <= data.date) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "A data final deve ser posterior à data inicial",
-          path: ["recurrenceEndsAt"],
-        });
-      }
+    if (data.fulfillmentType !== TransactionFulfillmentType.FORECAST) {
+      return;
+    }
 
-      if (
-        data.recurrenceType === TransactionRecurrenceType.CUSTOM &&
-        !data.recurrenceInterval
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Informe o intervalo em dias",
-          path: ["recurrenceInterval"],
-        });
-      }
+    if (data.recurrenceType === TransactionRecurrenceType.NONE) {
+      return;
+    }
+
+    if (!data.recurrenceEndsAt) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Defina uma data final para a recorrÃªncia",
+        path: ["recurrenceEndsAt"],
+      });
+    } else if (data.recurrenceEndsAt <= data.date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A data final deve ser posterior Ã  data inicial",
+        path: ["recurrenceEndsAt"],
+      });
+    }
+
+    if (
+      data.recurrenceType === TransactionRecurrenceType.CUSTOM &&
+      !data.recurrenceInterval
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe o intervalo em dias",
+        path: ["recurrenceInterval"],
+      });
     }
   });
 
@@ -139,7 +176,7 @@ const STATUS_OPTIONS = [
 
 const FULFILLMENT_OPTIONS = [
   {
-    label: "Pagamento único",
+    label: "Pagamento Ãºnico",
     value: TransactionFulfillmentType.IMMEDIATE,
   },
   {
@@ -149,33 +186,6 @@ const FULFILLMENT_OPTIONS = [
   {
     label: "Parcelada",
     value: TransactionFulfillmentType.INSTALLMENT,
-  },
-];
-
-const RECURRENCE_OPTIONS = [
-  {
-    label: "Não repetir",
-    value: TransactionRecurrenceType.NONE,
-  },
-  {
-    label: "Diariamente",
-    value: TransactionRecurrenceType.DAILY,
-  },
-  {
-    label: "Semanalmente",
-    value: TransactionRecurrenceType.WEEKLY,
-  },
-  {
-    label: "Mensalmente",
-    value: TransactionRecurrenceType.MONTHLY,
-  },
-  {
-    label: "Anualmente",
-    value: TransactionRecurrenceType.YEARLY,
-  },
-  {
-    label: "Personalizado (dias)",
-    value: TransactionRecurrenceType.CUSTOM,
   },
 ];
 
@@ -199,7 +209,7 @@ const UpsertTransactionDialog = ({
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: defaultValues?.name ?? "Nome da transação",
+      name: defaultValues?.name ?? "Nome da transaÃ§Ã£o",
       amount: defaultValues?.amount ?? 50,
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
       type: defaultValues?.type ?? TransactionType.EXPENSE,
@@ -212,38 +222,98 @@ const UpsertTransactionDialog = ({
         defaultValues?.fulfillmentType ?? TransactionFulfillmentType.IMMEDIATE,
       installmentCount: defaultValues?.installmentCount,
       installmentIndex: defaultValues?.installmentIndex,
+      installmentValueIsTotal: defaultValues?.installmentValueIsTotal ?? false,
       recurrenceType:
         defaultValues?.recurrenceType ?? TransactionRecurrenceType.NONE,
       recurrenceInterval: defaultValues?.recurrenceInterval,
       recurrenceEndsAt: defaultValues?.recurrenceEndsAt
         ? new Date(defaultValues.recurrenceEndsAt)
         : undefined,
+      recurrenceSkipWeekdays: defaultValues?.recurrenceSkipWeekdays ?? [],
     },
   });
 
   const fulfillmentType = form.watch("fulfillmentType");
   const recurrenceType = form.watch("recurrenceType");
+  const recurrenceSkipWeekdays = form.watch("recurrenceSkipWeekdays") ?? [];
+
+  const recurrencePreset = useMemo<RecurrencePreset>(() => {
+    if (recurrenceType === TransactionRecurrenceType.DAILY) {
+      if (!recurrenceSkipWeekdays.length) {
+        return "daily_all";
+      }
+      if (
+        recurrenceSkipWeekdays.length === 1 &&
+        recurrenceSkipWeekdays.includes(0)
+      ) {
+        return "daily_skip_sunday";
+      }
+      return "daily_custom";
+    }
+
+    return recurrenceType;
+  }, [recurrenceType, recurrenceSkipWeekdays]);
+
+  const handleRecurrencePresetChange = (
+    preset: RecurrencePreset,
+    onChange: (value: TransactionRecurrenceType) => void,
+  ) => {
+    if (preset === "daily_all") {
+      onChange(TransactionRecurrenceType.DAILY);
+      form.setValue("recurrenceSkipWeekdays", [], { shouldDirty: true });
+      return;
+    }
+
+    if (preset === "daily_skip_sunday") {
+      onChange(TransactionRecurrenceType.DAILY);
+      form.setValue("recurrenceSkipWeekdays", [0], { shouldDirty: true });
+      return;
+    }
+
+    if (preset === "daily_custom") {
+      onChange(TransactionRecurrenceType.DAILY);
+      form.setValue(
+        "recurrenceSkipWeekdays",
+        recurrenceSkipWeekdays.length ? recurrenceSkipWeekdays : [],
+        { shouldDirty: true },
+      );
+      return;
+    }
+
+    onChange(preset as TransactionRecurrenceType);
+    form.setValue("recurrenceSkipWeekdays", [], { shouldDirty: true });
+  };
 
   const onSubmit = async (data: FormSchema) => {
     try {
+      const isInstallment =
+        data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT;
+      const isForecast =
+        data.fulfillmentType === TransactionFulfillmentType.FORECAST;
+      const isDailyForecast =
+        isForecast && data.recurrenceType === TransactionRecurrenceType.DAILY;
+
       const payload = {
         ...data,
-        installmentCount:
-          data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT
-            ? data.installmentCount
-            : undefined,
-        installmentIndex:
-          data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT
-            ? data.installmentIndex
-            : undefined,
+        installmentCount: isInstallment ? data.installmentCount : undefined,
+        installmentIndex: isInstallment ? data.installmentIndex : undefined,
+        installmentValueIsTotal: isInstallment
+          ? (data.installmentValueIsTotal ?? false)
+          : false,
+        recurrenceType: isForecast
+          ? data.recurrenceType
+          : TransactionRecurrenceType.NONE,
         recurrenceInterval:
-          data.recurrenceType === TransactionRecurrenceType.CUSTOM
+          isForecast && data.recurrenceType === TransactionRecurrenceType.CUSTOM
             ? data.recurrenceInterval
             : undefined,
         recurrenceEndsAt:
-          data.recurrenceType === TransactionRecurrenceType.NONE
-            ? undefined
-            : data.recurrenceEndsAt,
+          isForecast && data.recurrenceType !== TransactionRecurrenceType.NONE
+            ? data.recurrenceEndsAt
+            : undefined,
+        recurrenceSkipWeekdays: isDailyForecast
+          ? (data.recurrenceSkipWeekdays ?? [])
+          : undefined,
         id: transactionId,
       };
 
@@ -268,10 +338,10 @@ const UpsertTransactionDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isUpdate ? "Editar" : "Adicionar"} transação
+            {isUpdate ? "Editar" : "Adicionar"} transaÃ§Ã£o
           </DialogTitle>
           <DialogDescription>
-            Preencha os dados para cadastrar sua movimentação.
+            Preencha os dados para cadastrar sua movimentaÃ§Ã£o.
           </DialogDescription>
         </DialogHeader>
 
@@ -284,7 +354,7 @@ const UpsertTransactionDialog = ({
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex.: Salário, aluguel..." {...field} />
+                    <Input placeholder="Ex.: SalÃ¡rio, aluguel..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -457,75 +527,162 @@ const UpsertTransactionDialog = ({
               </div>
             )}
 
-            <FormField
-              control={form.control}
-              name="recurrenceType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recorrência</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a recorrência" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {RECURRENCE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {recurrenceType === TransactionRecurrenceType.CUSTOM && (
+            {fulfillmentType === TransactionFulfillmentType.INSTALLMENT && (
               <FormField
                 control={form.control}
-                name="recurrenceInterval"
+                name="installmentValueIsTotal"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Intervalo (em dias)</FormLabel>
+                  <FormItem className="flex items-start gap-3 rounded-lg border border-white/10 p-3">
                     <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={field.value ?? ""}
+                      <input
+                        type="checkbox"
+                        checked={field.value ?? false}
                         onChange={(event) =>
-                          field.onChange(
-                            event.target.value
-                              ? Number(event.target.value)
-                              : undefined,
-                          )
+                          field.onChange(event.target.checked)
                         }
+                        className="mt-1 h-4 w-4 rounded border-primary text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <div className="space-y-1">
+                      <FormLabel className="text-sm font-medium">
+                        Valor informado é o total da compra?
+                      </FormLabel>
+                      <p className="text-xs text-muted-foreground">
+                        Dividiremos automaticamente pelo número de parcelas ao
+                        salvar.
+                      </p>
+                    </div>
                   </FormItem>
                 )}
               />
             )}
 
-            {recurrenceType !== TransactionRecurrenceType.NONE && (
-              <FormField
-                control={form.control}
-                name="recurrenceEndsAt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data final da recorrência</FormLabel>
-                    <DatePicker
-                      value={field.value}
-                      onChange={(date) => field.onChange(date)}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            {fulfillmentType === TransactionFulfillmentType.FORECAST && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="recurrenceType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Recorrência</FormLabel>
+                      <Select
+                        value={recurrencePreset}
+                        onValueChange={(value) =>
+                          handleRecurrencePresetChange(
+                            value as RecurrencePreset,
+                            field.onChange,
+                          )
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a recorrência" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {RECURRENCE_PRESET_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                {recurrencePreset === "daily_custom" && (
+                  <FormField
+                    control={form.control}
+                    name="recurrenceSkipWeekdays"
+                    render={({ field }) => {
+                      const currentValue = field.value ?? [];
+                      return (
+                        <FormItem>
+                          <FormLabel>Dias para pular</FormLabel>
+                          <div className="flex flex-wrap gap-2">
+                            {WEEKDAY_OPTIONS.map((weekday) => {
+                              const isSelected = currentValue.includes(
+                                weekday.value,
+                              );
+                              return (
+                                <Button
+                                  key={weekday.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  className="h-9 px-3 text-sm"
+                                  onClick={() => {
+                                    const nextValue = isSelected
+                                      ? currentValue.filter(
+                                          (day) => day !== weekday.value,
+                                        )
+                                      : [...currentValue, weekday.value];
+                                    field.onChange(
+                                      nextValue.sort((a, b) => a - b),
+                                    );
+                                  }}
+                                >
+                                  {weekday.label}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Escolha os dias que devem ser ignorados nessa
+                            recorrência diária.
+                          </p>
+                        </FormItem>
+                      );
+                    }}
+                  />
+                )}
+
+                {recurrenceType === TransactionRecurrenceType.CUSTOM && (
+                  <FormField
+                    control={form.control}
+                    name="recurrenceInterval"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Intervalo (em dias)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={field.value ?? ""}
+                            onChange={(event) =>
+                              field.onChange(
+                                event.target.value
+                                  ? Number(event.target.value)
+                                  : undefined,
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {recurrenceType !== TransactionRecurrenceType.NONE && (
+                  <FormField
+                    control={form.control}
+                    name="recurrenceEndsAt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data final da recorrência</FormLabel>
+                        <DatePicker
+                          value={field.value}
+                          onChange={(date) => field.onChange(date)}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </>
+            )}
             <FormField
               control={form.control}
               name="type"
@@ -581,11 +738,11 @@ const UpsertTransactionDialog = ({
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Método de pagamento</FormLabel>
+                  <FormLabel>MÃ©todo de pagamento</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um método de pagamento" />
+                        <SelectValue placeholder="Selecione um mÃ©todo de pagamento" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

@@ -15,6 +15,7 @@ export type SerializableTransaction = Omit<
   | "updateAt"
   | "executedAt"
   | "recurrenceEndsAt"
+  | "recurrenceSkipWeekdays"
 > & {
   amount: number;
   date: string;
@@ -22,6 +23,7 @@ export type SerializableTransaction = Omit<
   updateAt: string;
   executedAt: string | null;
   recurrenceEndsAt: string | null;
+  recurrenceSkipWeekdays: string | null;
 };
 
 interface TransactionsBoardProps {

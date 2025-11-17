@@ -30,51 +30,83 @@ interface UpsertTransactionParams {
   recurrenceType: TransactionRecurrenceType;
   recurrenceInterval?: number | null;
   recurrenceEndsAt?: Date | null;
+  recurrenceSkipWeekdays?: number[] | null;
+  installmentValueIsTotal?: boolean;
 }
 
 export const upsertTransaction = async (params: UpsertTransactionParams) => {
   upsertTransactionSchema.parse(params);
+  const { recurrenceSkipWeekdays, installmentValueIsTotal, ...safeParams } =
+    params;
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
   }
+  const shouldSplitInstallmentValue =
+    safeParams.fulfillmentType === TransactionFulfillmentType.INSTALLMENT &&
+    Boolean(installmentValueIsTotal) &&
+    typeof safeParams.installmentCount === "number" &&
+    safeParams.installmentCount > 0;
+
+  const normalizedAmount = shouldSplitInstallmentValue
+    ? safeParams.amount / (safeParams.installmentCount as number)
+    : safeParams.amount;
+
+  const shouldPersistInstallmentFlag =
+    safeParams.fulfillmentType === TransactionFulfillmentType.INSTALLMENT
+      ? Boolean(installmentValueIsTotal)
+      : false;
+
   const executedAt =
-    params.status === TransactionStatus.EXECUTED ? params.date : null;
+    safeParams.status === TransactionStatus.EXECUTED ? safeParams.date : null;
   const normalizedInstallmentIndex =
-    params.fulfillmentType === TransactionFulfillmentType.INSTALLMENT
-      ? (params.installmentIndex ?? 1)
+    safeParams.fulfillmentType === TransactionFulfillmentType.INSTALLMENT
+      ? (safeParams.installmentIndex ?? 1)
       : null;
   const normalizedInstallmentCount =
-    params.fulfillmentType === TransactionFulfillmentType.INSTALLMENT
-      ? (params.installmentCount ?? null)
+    safeParams.fulfillmentType === TransactionFulfillmentType.INSTALLMENT
+      ? (safeParams.installmentCount ?? null)
       : null;
   const normalizedRecurrenceInterval =
-    params.recurrenceType === TransactionRecurrenceType.CUSTOM
-      ? (params.recurrenceInterval ?? 1)
+    safeParams.recurrenceType === TransactionRecurrenceType.CUSTOM
+      ? (safeParams.recurrenceInterval ?? 1)
       : null;
   const normalizedRecurrenceEndsAt =
-    params.recurrenceType === TransactionRecurrenceType.NONE
+    safeParams.recurrenceType === TransactionRecurrenceType.NONE
       ? null
-      : (params.recurrenceEndsAt ?? null);
+      : (safeParams.recurrenceEndsAt ?? null);
+
+  const recurrenceSkipWeekdaysString =
+    recurrenceSkipWeekdays && recurrenceSkipWeekdays.length
+      ? JSON.stringify(recurrenceSkipWeekdays)
+      : null;
+
+  const baseTransactionData = {
+    ...safeParams,
+    amount: normalizedAmount,
+    installmentValueIsTotal: shouldPersistInstallmentFlag,
+  };
 
   const savedTransaction = await db.transaction.upsert({
     update: {
-      ...params,
+      ...baseTransactionData,
       installmentIndex: normalizedInstallmentIndex,
       installmentCount: normalizedInstallmentCount,
       recurrenceType: params.recurrenceType,
       recurrenceInterval: normalizedRecurrenceInterval,
       recurrenceEndsAt: normalizedRecurrenceEndsAt,
+      recurrenceSkipWeekdays: recurrenceSkipWeekdaysString,
       executedAt,
       userId,
     },
     create: {
-      ...params,
+      ...baseTransactionData,
       installmentIndex: normalizedInstallmentIndex,
       installmentCount: normalizedInstallmentCount,
       recurrenceType: params.recurrenceType,
       recurrenceInterval: normalizedRecurrenceInterval,
       recurrenceEndsAt: normalizedRecurrenceEndsAt,
+      recurrenceSkipWeekdays: recurrenceSkipWeekdaysString,
       executedAt,
       userId,
     },
