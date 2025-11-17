@@ -40,7 +40,7 @@ export const createTransactionColumns = (
   },
   {
     accessorKey: "paymentMethod",
-    header: "MÃ©todo de Pagamento",
+    header: "Método de Pagamento",
     cell: ({ row: { original: transaction } }) =>
       TRANSACTION_PAYMENT_METHOD_LABELS[transaction.paymentMethod],
   },

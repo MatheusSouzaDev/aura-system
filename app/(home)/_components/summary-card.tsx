@@ -90,39 +90,39 @@ const SummaryCard = ({
 
       {size === "large" && (hasHistoricalData || hasForecastData) && (
         <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
-          <div className="grid gap-6 text-sm sm:grid-cols-3">
-            <div className="space-y-1">
-              <p className="text-muted-foreground">Saldo mês anterior</p>
+          <div className="flex flex-wrap gap-4 text-sm sm:items-center">
+            <div className="flex min-w-[180px] flex-1 flex-col gap-1">
+              <p className="text-muted-foreground">Saldo Inicial</p>
               <p className="font-medium">
                 {formatCurrency(previousAmount ?? 0)}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-1">
-              <p className="text-muted-foreground">Diferença</p>
-              <div
-                className={`flex items-center gap-2 font-semibold ${differenceColor}`}
-              >
-                {differenceValue > 0 && <ArrowUpRightIcon size={16} />}
-                {differenceValue < 0 && <ArrowDownRightIcon size={16} />}
-                {differenceValue === 0 && <MinusIcon size={16} />}
-                <span>
-                  {differenceValue > 0 ? "+" : differenceValue < 0 ? "-" : ""}
-                  {formatCurrency(Math.abs(differenceValue))}
-                </span>
-              </div>
-            </div>
-            {hasForecastData && (
-              <div className="flex flex-col items-end gap-1">
-                <p className="text-muted-foreground">Saldo previsto</p>
+            <div className="flex min-w-[220px] flex-1 flex-col gap-3">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-muted-foreground">Diferença</p>
                 <div
-                  className={`flex flex-col items-end gap-1 font-semibold ${forecastColor}`}
+                  className={`flex items-center gap-2 font-semibold ${differenceColor}`}
                 >
-                  <span className="text-base">
-                    {formatCurrency(forecastAmount ?? 0)}
+                  {differenceValue > 0 && <ArrowUpRightIcon size={16} />}
+                  {differenceValue < 0 && <ArrowDownRightIcon size={16} />}
+                  {differenceValue === 0 && <MinusIcon size={16} />}
+                  <span>
+                    {differenceValue > 0 ? "+" : differenceValue < 0 ? "-" : ""}
+                    {formatCurrency(Math.abs(differenceValue))}
                   </span>
                 </div>
               </div>
-            )}
+              {hasForecastData && (
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-muted-foreground">Saldo previsto</p>
+                  <div
+                    className={`flex flex-col items-end font-semibold ${forecastColor}`}
+                  >
+                    <span>{formatCurrency(forecastAmount ?? 0)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       )}

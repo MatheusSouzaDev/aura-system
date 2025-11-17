@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/ui/select";
-import { MONTH_OPTIONS, getRecentYears } from "@/app/_constants/time";
+import { MONTH_OPTIONS } from "@/app/_constants/time";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
@@ -17,11 +17,21 @@ interface TimeSelectProps {
   className?: string;
 }
 
+const buildYearRange = (currentYear: number, span: number) => {
+  const years: string[] = [];
+  const start = currentYear - span;
+  const end = currentYear + span;
+  for (let y = start; y <= end; y++) {
+    years.push(String(y));
+  }
+  return years;
+};
+
 const TimeSelect = ({ month, year, className }: TimeSelectProps) => {
   const { push } = useRouter();
   const searchParams = useSearchParams();
-
-  const years = useMemo(() => getRecentYears(5), []);
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const years = useMemo(() => buildYearRange(currentYear, 15), [currentYear]);
 
   const updatePeriod = (nextMonth: string, nextYear: string) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
