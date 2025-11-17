@@ -48,18 +48,14 @@ const AcquirePlanButton = ({ plan, isActive }: AcquirePlanButtonProps) => {
   const handleManagePlanClick = async () => {
     try {
       setIsLoading(true);
-      const { url, error } = await createStripePortalSession();
+      const { url } = await createStripePortalSession();
       if (!url) {
-        throw new Error(error ?? "Não foi possível abrir o portal do cliente.");
+        throw new Error("Portal URL not received");
       }
       window.location.href = url;
     } catch (error) {
       console.error(error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível abrir o portal do cliente.",
-      );
+      toast.error("Não foi possível abrir o portal do cliente.");
     } finally {
       setIsLoading(false);
     }
@@ -105,3 +101,4 @@ const AcquirePlanButton = ({ plan, isActive }: AcquirePlanButtonProps) => {
 };
 
 export default AcquirePlanButton;
+ 
