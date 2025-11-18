@@ -148,8 +148,8 @@ const TransactionStatusToggle = ({
                 <p className="text-sm font-medium text-white">
                   Escolher outra data
                 </p>
-                <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-end">
-                  <div className="flex-1">
+                <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="min-w-0">
                     <DatePicker
                       value={customDate}
                       onChange={(date) => setCustomDate(date ?? undefined)}
@@ -157,7 +157,7 @@ const TransactionStatusToggle = ({
                   </div>
                   <Button
                     type="button"
-                    className="w-full md:w-auto"
+                    className="w-full md:w-auto md:justify-self-end"
                     disabled={!customDate || isPending}
                     onClick={() => customDate && markAsExecuted(customDate)}
                   >

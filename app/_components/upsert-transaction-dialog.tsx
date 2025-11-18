@@ -244,7 +244,12 @@ const UpsertTransactionDialog = ({
 
   const fulfillmentType = form.watch("fulfillmentType");
   const recurrenceType = form.watch("recurrenceType");
-  const recurrenceSkipWeekdays = form.watch("recurrenceSkipWeekdays") ?? [];
+  const watchedRecurrenceSkipWeekdays = form.watch("recurrenceSkipWeekdays");
+  const recurrenceSkipWeekdays = useMemo(
+    () => watchedRecurrenceSkipWeekdays ?? [],
+    [watchedRecurrenceSkipWeekdays],
+  );
+  const transactionDate = form.watch("date");
 
   const recurrencePreset = useMemo<RecurrencePreset>(() => {
     if (recurrenceType === TransactionRecurrenceType.DAILY) {
@@ -279,11 +284,25 @@ const UpsertTransactionDialog = ({
 
     if (preset === "daily_custom") {
       onChange(TransactionRecurrenceType.DAILY);
-      form.setValue(
-        "recurrenceSkipWeekdays",
-        recurrenceSkipWeekdays.length ? recurrenceSkipWeekdays : [],
-        { shouldDirty: true },
-      );
+
+      if (recurrenceSkipWeekdays.length) {
+        form.setValue("recurrenceSkipWeekdays", recurrenceSkipWeekdays, {
+          shouldDirty: true,
+        });
+        return;
+      }
+
+      const baseWeekday =
+        transactionDate instanceof Date
+          ? transactionDate.getDay()
+          : new Date().getDay();
+      const skipOthers = WEEKDAY_OPTIONS.filter(
+        (weekday) => weekday.value !== baseWeekday,
+      ).map((weekday) => weekday.value);
+
+      form.setValue("recurrenceSkipWeekdays", skipOthers, {
+        shouldDirty: true,
+      });
       return;
     }
 
@@ -345,10 +364,10 @@ const UpsertTransactionDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isUpdate ? "Editar" : "Adicionar"} transacao
+            {isUpdate ? "Editar" : "Adicionar"} transação
           </DialogTitle>
           <DialogDescription>
-            Preencha os dados para cadastrar sua movimentacao.
+            Preencha os dados para cadastrar sua movimentação.
           </DialogDescription>
         </DialogHeader>
 
@@ -555,7 +574,7 @@ const UpsertTransactionDialog = ({
                         Valor informado e o total da compra?
                       </FormLabel>
                       <p className="text-xs text-muted-foreground">
-                        Dividiremos automaticamente pelo numero de parcelas ao
+                        Dividiremos automaticamente pelo número de parcelas ao
                         salvar.
                       </p>
                     </div>
@@ -571,7 +590,7 @@ const UpsertTransactionDialog = ({
                   name="recurrenceType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Recorrencia</FormLabel>
+                      <FormLabel>Recorrência</FormLabel>
                       <Select
                         value={recurrencePreset}
                         onValueChange={(value) =>
@@ -583,7 +602,7 @@ const UpsertTransactionDialog = ({
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a recorrencia" />
+                            <SelectValue placeholder="Selecione a recorrência" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -642,7 +661,7 @@ const UpsertTransactionDialog = ({
                             })}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Selecione os dias em que a transacao deve acontecer.
+                            Selecione os dias em que a transação deve acontecer.
                           </p>
                           <FormMessage />
                         </FormItem>
@@ -685,7 +704,7 @@ const UpsertTransactionDialog = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Data final da recorrencia (opcional)
+                          Data final da recorrência (opcional)
                         </FormLabel>
                         <DatePicker
                           value={field.value}
@@ -753,11 +772,11 @@ const UpsertTransactionDialog = ({
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Metodo de pagamento</FormLabel>
+                  <FormLabel>Método de pagamento</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um metodo de pagamento" />
+                        <SelectValue placeholder="Selecione um método de pagamento" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

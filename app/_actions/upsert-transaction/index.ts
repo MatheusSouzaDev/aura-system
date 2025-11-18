@@ -192,6 +192,9 @@ const createRecurringChildren = async (transaction: Transaction) => {
     return;
   }
 
+  const skipWeekdays = parseRecurrenceSkipWeekdays(
+    transaction.recurrenceSkipWeekdays,
+  );
   const maxOccurrences = 120;
   const occurrences: Date[] = [];
   let iterations = 0;
@@ -200,6 +203,7 @@ const createRecurringChildren = async (transaction: Transaction) => {
     cursor,
     transaction.recurrenceType,
     transaction.recurrenceInterval,
+    skipWeekdays,
   );
 
   while (nextDate && nextDate <= endDate && iterations < maxOccurrences) {
@@ -209,6 +213,7 @@ const createRecurringChildren = async (transaction: Transaction) => {
       cursor,
       transaction.recurrenceType,
       transaction.recurrenceInterval,
+      skipWeekdays,
     );
     iterations += 1;
   }
@@ -246,11 +251,28 @@ const getNextRecurrenceDate = (
   currentDate: Date,
   recurrenceType: TransactionRecurrenceType,
   recurrenceInterval?: number | null,
+  recurrenceSkipWeekdays?: number[] | null,
 ) => {
   const base = new Date(currentDate);
   switch (recurrenceType) {
-    case TransactionRecurrenceType.DAILY:
-      return addDays(base, 1);
+    case TransactionRecurrenceType.DAILY: {
+      const skipSet = new Set(
+        Array.isArray(recurrenceSkipWeekdays)
+          ? recurrenceSkipWeekdays
+              .map((day) => Number(day))
+              .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)
+          : [],
+      );
+      let candidate = addDays(base, 1);
+      let guard = 0;
+
+      while (skipSet.has(candidate.getDay()) && guard < 7) {
+        candidate = addDays(candidate, 1);
+        guard += 1;
+      }
+
+      return candidate;
+    }
     case TransactionRecurrenceType.WEEKLY:
       return addDays(base, 7);
     case TransactionRecurrenceType.MONTHLY:
@@ -283,4 +305,23 @@ const addYears = (date: Date, years: number) => {
   const result = new Date(date);
   result.setFullYear(result.getFullYear() + years);
   return result;
+};
+
+const parseRecurrenceSkipWeekdays = (value?: string | null) => {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((day) => Number(day))
+        .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6);
+    }
+  } catch {
+    // Ignore malformed JSON and fall back to an empty list
+  }
+
+  return [];
 };
