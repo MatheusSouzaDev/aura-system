@@ -119,43 +119,52 @@ const TransactionStatusToggle = ({
               deseja registrá-la?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex flex-col gap-3">
+          <AlertDialogFooter className="flex flex-col gap-4">
             <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
-            <div className="grid w-full gap-2 sm:grid-cols-2">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isPending}
-                onClick={() => markAsExecuted(plannedDate)}
-              >
-                Usar data prevista
-              </Button>
-              <Button
-                type="button"
-                disabled={isPending}
-                onClick={() => markAsExecuted(new Date())}
-              >
-                Usar data atual
-              </Button>
-            </div>
-            <div className="rounded-lg border border-white/10 p-4">
-              <p className="text-sm font-medium text-white">
-                Escolher outra data
-              </p>
-              <div className="mt-2">
-                <DatePicker
-                  value={customDate}
-                  onChange={(date) => setCustomDate(date ?? undefined)}
-                />
-              </div>
-              <Button
-                type="button"
-                className="mt-3 w-full"
-                disabled={!customDate || isPending}
-                onClick={() => customDate && markAsExecuted(customDate)}
-              >
-                Confirmar data personalizada
-              </Button>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <section className="rounded-lg border border-white/10 p-4 shadow-sm">
+                <p className="text-sm font-medium text-white">
+                  Usar uma das opções sugeridas
+                </p>
+                <div className="mt-3 flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isPending}
+                    onClick={() => markAsExecuted(plannedDate)}
+                  >
+                    Usar data prevista
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => markAsExecuted(new Date())}
+                  >
+                    Usar data atual
+                  </Button>
+                </div>
+              </section>
+              <section className="rounded-lg border border-white/10 p-4 shadow-sm">
+                <p className="text-sm font-medium text-white">
+                  Escolher outra data
+                </p>
+                <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-end">
+                  <div className="flex-1">
+                    <DatePicker
+                      value={customDate}
+                      onChange={(date) => setCustomDate(date ?? undefined)}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    className="w-full md:w-auto"
+                    disabled={!customDate || isPending}
+                    onClick={() => customDate && markAsExecuted(customDate)}
+                  >
+                    Confirmar data
+                  </Button>
+                </div>
+              </section>
             </div>
           </AlertDialogFooter>
         </AlertDialogContent>

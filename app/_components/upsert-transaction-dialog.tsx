@@ -56,20 +56,23 @@ const WEEKDAY_OPTIONS = [
   { value: 3, label: "Qua" },
   { value: 4, label: "Qui" },
   { value: 5, label: "Sex" },
-  { value: 6, label: "SÃ¡b" },
+  { value: 6, label: "Sáb" },
 ];
 
 type RecurrencePreset =
   | "daily_all"
-  | "daily_skip_sunday"
+  | "daily_skip_weekends"
   | "daily_custom"
   | TransactionRecurrenceType;
 
 const RECURRENCE_PRESET_OPTIONS: { label: string; value: RecurrencePreset }[] =
   [
-    { label: "NÃ£o repetir", value: TransactionRecurrenceType.NONE },
+    { label: "Não repetir", value: TransactionRecurrenceType.NONE },
     { label: "Diariamente", value: "daily_all" },
-    { label: "Diariamente (exceto domingos)", value: "daily_skip_sunday" },
+    {
+      label: "Diariamente (exceto fins de semana)",
+      value: "daily_skip_weekends",
+    },
     { label: "Diariamente (personalizado)", value: "daily_custom" },
     { label: "Semanalmente", value: TransactionRecurrenceType.WEEKLY },
     { label: "Mensalmente", value: TransactionRecurrenceType.MONTHLY },
@@ -80,22 +83,22 @@ const RECURRENCE_PRESET_OPTIONS: { label: string; value: RecurrencePreset }[] =
 const formSchema = z
   .object({
     name: z.string().trim().min(1, {
-      message: "O nome Ã© obrigatÃ³rio",
+      message: "O nome é obrigatório",
     }),
     amount: z
-      .number({ required_error: "O valor Ã© obrigatÃ³rio" })
+      .number({ required_error: "O valor é obrigatório" })
       .positive({ message: "O valor deve ser positivo" }),
     type: z.nativeEnum(TransactionType, {
-      required_error: "O tipo Ã© obrigatÃ³rio",
+      required_error: "O tipo é obrigatório",
     }),
     category: z.nativeEnum(TransactionCategory, {
-      required_error: "A categoria Ã© obrigatÃ³ria",
+      required_error: "A categoria é obrigatória",
     }),
     paymentMethod: z.nativeEnum(TransactionPaymentMethod, {
-      required_error: "O mÃ©todo de pagamento Ã© obrigatÃ³rio",
+      required_error: "O metodo de pagamento é obrigatório",
     }),
     date: z.date({
-      required_error: "A data Ã© obrigatÃ³ria",
+      required_error: "A data é obrigatória",
     }),
     accountId: z.string().min(1, "Selecione uma conta"),
     status: z.nativeEnum(TransactionStatus, {
@@ -121,7 +124,7 @@ const formSchema = z
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Informe o nÃºmero e total de parcelas",
+          message: "Informe o número e total de parcelas",
           path: ["installmentCount"],
         });
       }
@@ -135,16 +138,10 @@ const formSchema = z
       return;
     }
 
-    if (!data.recurrenceEndsAt) {
+    if (data.recurrenceEndsAt && data.recurrenceEndsAt <= data.date) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Defina uma data final para a recorrÃªncia",
-        path: ["recurrenceEndsAt"],
-      });
-    } else if (data.recurrenceEndsAt <= data.date) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "A data final deve ser posterior Ã  data inicial",
+        message: "A data final deve ser posterior a data inicial",
         path: ["recurrenceEndsAt"],
       });
     }
@@ -157,6 +154,18 @@ const formSchema = z
         code: z.ZodIssueCode.custom,
         message: "Informe o intervalo em dias",
         path: ["recurrenceInterval"],
+      });
+    }
+
+    if (
+      data.recurrenceType === TransactionRecurrenceType.DAILY &&
+      data.recurrenceSkipWeekdays &&
+      data.recurrenceSkipWeekdays.length === WEEKDAY_OPTIONS.length
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione pelo menos um dia para repetir",
+        path: ["recurrenceSkipWeekdays"],
       });
     }
   });
@@ -176,7 +185,7 @@ const STATUS_OPTIONS = [
 
 const FULFILLMENT_OPTIONS = [
   {
-    label: "Pagamento Ãºnico",
+    label: "Pagamento único",
     value: TransactionFulfillmentType.IMMEDIATE,
   },
   {
@@ -209,7 +218,7 @@ const UpsertTransactionDialog = ({
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: defaultValues?.name ?? "Nome da transaÃ§Ã£o",
+      name: defaultValues?.name ?? "Nome da transação",
       amount: defaultValues?.amount ?? 50,
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
       type: defaultValues?.type ?? TransactionType.EXPENSE,
@@ -242,11 +251,9 @@ const UpsertTransactionDialog = ({
       if (!recurrenceSkipWeekdays.length) {
         return "daily_all";
       }
-      if (
-        recurrenceSkipWeekdays.length === 1 &&
-        recurrenceSkipWeekdays.includes(0)
-      ) {
-        return "daily_skip_sunday";
+      const sorted = [...recurrenceSkipWeekdays].sort();
+      if (sorted.length === 2 && sorted[0] === 0 && sorted[1] === 6) {
+        return "daily_skip_weekends";
       }
       return "daily_custom";
     }
@@ -264,9 +271,9 @@ const UpsertTransactionDialog = ({
       return;
     }
 
-    if (preset === "daily_skip_sunday") {
+    if (preset === "daily_skip_weekends") {
       onChange(TransactionRecurrenceType.DAILY);
-      form.setValue("recurrenceSkipWeekdays", [0], { shouldDirty: true });
+      form.setValue("recurrenceSkipWeekdays", [0, 6], { shouldDirty: true });
       return;
     }
 
@@ -338,10 +345,10 @@ const UpsertTransactionDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isUpdate ? "Editar" : "Adicionar"} transaÃ§Ã£o
+            {isUpdate ? "Editar" : "Adicionar"} transacao
           </DialogTitle>
           <DialogDescription>
-            Preencha os dados para cadastrar sua movimentaÃ§Ã£o.
+            Preencha os dados para cadastrar sua movimentacao.
           </DialogDescription>
         </DialogHeader>
 
@@ -354,7 +361,7 @@ const UpsertTransactionDialog = ({
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex.: SalÃ¡rio, aluguel..." {...field} />
+                    <Input placeholder="Ex.: Salário, aluguel..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -545,10 +552,10 @@ const UpsertTransactionDialog = ({
                     </FormControl>
                     <div className="space-y-1">
                       <FormLabel className="text-sm font-medium">
-                        Valor informado é o total da compra?
+                        Valor informado e o total da compra?
                       </FormLabel>
                       <p className="text-xs text-muted-foreground">
-                        Dividiremos automaticamente pelo número de parcelas ao
+                        Dividiremos automaticamente pelo numero de parcelas ao
                         salvar.
                       </p>
                     </div>
@@ -564,7 +571,7 @@ const UpsertTransactionDialog = ({
                   name="recurrenceType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Recorrência</FormLabel>
+                      <FormLabel>Recorrencia</FormLabel>
                       <Select
                         value={recurrencePreset}
                         onValueChange={(value) =>
@@ -576,7 +583,7 @@ const UpsertTransactionDialog = ({
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a recorrência" />
+                            <SelectValue placeholder="Selecione a recorrencia" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -597,13 +604,13 @@ const UpsertTransactionDialog = ({
                     control={form.control}
                     name="recurrenceSkipWeekdays"
                     render={({ field }) => {
-                      const currentValue = field.value ?? [];
+                      const skippedWeekdays = field.value ?? [];
                       return (
                         <FormItem>
-                          <FormLabel>Dias para pular</FormLabel>
+                          <FormLabel>Dias da semana</FormLabel>
                           <div className="flex flex-wrap gap-2">
                             {WEEKDAY_OPTIONS.map((weekday) => {
-                              const isSelected = currentValue.includes(
+                              const isSelected = !skippedWeekdays.includes(
                                 weekday.value,
                               );
                               return (
@@ -613,13 +620,19 @@ const UpsertTransactionDialog = ({
                                   variant={isSelected ? "default" : "outline"}
                                   className="h-9 px-3 text-sm"
                                   onClick={() => {
-                                    const nextValue = isSelected
-                                      ? currentValue.filter(
+                                    const nextSkipped = isSelected
+                                      ? [...skippedWeekdays, weekday.value]
+                                      : skippedWeekdays.filter(
                                           (day) => day !== weekday.value,
-                                        )
-                                      : [...currentValue, weekday.value];
+                                        );
+                                    if (
+                                      nextSkipped.length ===
+                                      WEEKDAY_OPTIONS.length
+                                    ) {
+                                      return;
+                                    }
                                     field.onChange(
-                                      nextValue.sort((a, b) => a - b),
+                                      nextSkipped.sort((a, b) => a - b),
                                     );
                                   }}
                                 >
@@ -629,9 +642,9 @@ const UpsertTransactionDialog = ({
                             })}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Escolha os dias que devem ser ignorados nessa
-                            recorrência diária.
+                            Selecione os dias em que a transacao deve acontecer.
                           </p>
+                          <FormMessage />
                         </FormItem>
                       );
                     }}
@@ -671,7 +684,9 @@ const UpsertTransactionDialog = ({
                     name="recurrenceEndsAt"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Data final da recorrência</FormLabel>
+                        <FormLabel>
+                          Data final da recorrencia (opcional)
+                        </FormLabel>
                         <DatePicker
                           value={field.value}
                           onChange={(date) => field.onChange(date)}
@@ -738,11 +753,11 @@ const UpsertTransactionDialog = ({
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>MÃ©todo de pagamento</FormLabel>
+                  <FormLabel>Metodo de pagamento</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um mÃ©todo de pagamento" />
+                        <SelectValue placeholder="Selecione um metodo de pagamento" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

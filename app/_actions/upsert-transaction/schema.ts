@@ -53,16 +53,10 @@ export const upsertTransactionSchema = z
       return;
     }
 
-    if (!data.recurrenceEndsAt) {
+    if (data.recurrenceEndsAt && data.recurrenceEndsAt <= data.date) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Defina uma data final para a recorrência",
-        path: ["recurrenceEndsAt"],
-      });
-    } else if (data.recurrenceEndsAt <= data.date) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "A data final deve ser posterior à data inicial",
+        message: "A data final deve ser posterior a data inicial",
         path: ["recurrenceEndsAt"],
       });
     }
@@ -75,6 +69,18 @@ export const upsertTransactionSchema = z
         code: z.ZodIssueCode.custom,
         message: "Informe o intervalo em dias",
         path: ["recurrenceInterval"],
+      });
+    }
+
+    if (
+      data.recurrenceType === TransactionRecurrenceType.DAILY &&
+      Array.isArray(data.recurrenceSkipWeekdays) &&
+      data.recurrenceSkipWeekdays.length === 7
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione pelo menos um dia para repetir",
+        path: ["recurrenceSkipWeekdays"],
       });
     }
   });

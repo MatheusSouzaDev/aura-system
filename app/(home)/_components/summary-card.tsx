@@ -98,7 +98,7 @@ const SummaryCard = ({
               </p>
             </div>
             <div className="flex gap-4">
-              <div className="flex items-end gap-1">
+              <div className="flex flex-col items-end gap-1">
                 <p className="text-muted-foreground">Diferença</p>
                 <div
                   className={`flex items-center gap-2 font-semibold ${differenceColor}`}
@@ -113,7 +113,7 @@ const SummaryCard = ({
                 </div>
               </div>
               {hasForecastData && (
-                <div className="flex items-end gap-1">
+                <div className="flex flex-col items-end gap-1">
                   <p className="text-muted-foreground">Saldo previsto</p>
                   <div
                     className={`flex flex-col items-end font-semibold ${forecastColor}`}
