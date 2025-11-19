@@ -73,6 +73,7 @@ enum TransactionCategory {
   HELTH
   UTILITY
   SALARY
+  INVESTMENT
   EDUCATION
   OTHER
 }
