@@ -35,39 +35,39 @@ export const TRANSACTION_PAYMENT_METHOD_ICONS = {
 
 export const TRANSACTION_TYPE_OPTIONS = [
   {
-    label: "Despesa",
-    value: TransactionType.EXPENSE,
-  },
-  {
     label: "Receita",
     value: TransactionType.DEPOSIT,
   },
   {
-    label: "Transferencia",
+    label: "Despesa",
+    value: TransactionType.EXPENSE,
+  },
+  {
+    label: "Transferência",
     value: TransactionType.TRANSFER,
   },
 ];
 
 export const PAYMENT_METHOD_OPTIONS = [
   {
-    label: TRANSACTION_PAYMENT_METHOD_LABELS.PIX,
-    value: "PIX",
-  },
-  {
-    label: TRANSACTION_PAYMENT_METHOD_LABELS.CASH,
-    value: "CASH",
-  },
-  {
     label: TRANSACTION_PAYMENT_METHOD_LABELS.BANK_SLIP,
     value: "BANK_SLIP",
+  },
+  {
+    label: TRANSACTION_PAYMENT_METHOD_LABELS.CREDIT_CARD,
+    value: "CREDIT_CARD",
   },
   {
     label: TRANSACTION_PAYMENT_METHOD_LABELS.DEBIT_CARD,
     value: "DEBIT_CARD",
   },
   {
-    label: TRANSACTION_PAYMENT_METHOD_LABELS.CREDIT_CARD,
-    value: "CREDIT_CARD",
+    label: TRANSACTION_PAYMENT_METHOD_LABELS.CASH,
+    value: "CASH",
+  },
+  {
+    label: TRANSACTION_PAYMENT_METHOD_LABELS.PIX,
+    value: "PIX",
   },
   {
     label: TRANSACTION_PAYMENT_METHOD_LABELS.BANK_TRANSFER,
@@ -81,6 +81,10 @@ export const PAYMENT_METHOD_OPTIONS = [
 
 export const TRANSACTION_CATEGORY_OPTIONS = [
   {
+    label: TRANSACTION_CATEGORY_LABELS.FOOD,
+    value: "FOOD",
+  },
+  {
     label: TRANSACTION_CATEGORY_LABELS.EDUCATION,
     value: "EDUCATION",
   },
@@ -89,12 +93,8 @@ export const TRANSACTION_CATEGORY_OPTIONS = [
     value: "ENTERTAIMENT",
   },
   {
-    label: TRANSACTION_CATEGORY_LABELS.FOOD,
-    value: "FOOD",
-  },
-  {
-    label: TRANSACTION_CATEGORY_LABELS.HELTH,
-    value: "HELTH",
+    label: TRANSACTION_CATEGORY_LABELS.INVESTMENT,
+    value: "INVESTMENT",
   },
   {
     label: TRANSACTION_CATEGORY_LABELS.HOUSING,
@@ -103,6 +103,10 @@ export const TRANSACTION_CATEGORY_OPTIONS = [
   {
     label: TRANSACTION_CATEGORY_LABELS.SALARY,
     value: "SALARY",
+  },
+  {
+    label: TRANSACTION_CATEGORY_LABELS.HELTH,
+    value: "HELTH",
   },
   {
     label: TRANSACTION_CATEGORY_LABELS.TRANSPORTATION,
@@ -115,9 +119,5 @@ export const TRANSACTION_CATEGORY_OPTIONS = [
   {
     label: TRANSACTION_CATEGORY_LABELS.OTHER,
     value: "OTHER",
-  },
-  {
-    label: TRANSACTION_CATEGORY_LABELS.INVESTMENT,
-    value: "INVESTMENT",
   },
 ];

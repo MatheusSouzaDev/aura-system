@@ -148,10 +148,7 @@ const syncRelatedTransactions = async (transaction: Transaction) => {
     await createInstallmentChildren(transaction);
   }
 
-  if (
-    transaction.recurrenceType !== TransactionRecurrenceType.NONE &&
-    transaction.recurrenceEndsAt
-  ) {
+  if (transaction.recurrenceType !== TransactionRecurrenceType.NONE) {
     await createRecurringChildren(transaction);
   }
 };
@@ -199,10 +196,6 @@ const createInstallmentChildren = async (transaction: Transaction) => {
 
 const createRecurringChildren = async (transaction: Transaction) => {
   const endDate = transaction.recurrenceEndsAt;
-  if (!endDate) {
-    return;
-  }
-
   const skipWeekdays = parseRecurrenceSkipWeekdays(
     transaction.recurrenceSkipWeekdays,
   );
@@ -217,7 +210,11 @@ const createRecurringChildren = async (transaction: Transaction) => {
     skipWeekdays,
   );
 
-  while (nextDate && nextDate <= endDate && iterations < maxOccurrences) {
+  while (nextDate && iterations < maxOccurrences) {
+    if (endDate && nextDate > endDate) {
+      break;
+    }
+
     occurrences.push(nextDate);
     cursor = nextDate;
     nextDate = getNextRecurrenceDate(
