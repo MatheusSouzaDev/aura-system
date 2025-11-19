@@ -149,7 +149,7 @@ const TransactionStatusToggle = ({
                   Escolher outra data
                 </p>
                 <div className="mt-3 flex flex-wrap items-start gap-3">
-                  <div className="min-w-[220px] flex-1">
+                  <div className="min-w-0 flex-1 basis-[220px]">
                     <DatePicker
                       value={customDate}
                       onChange={(date) => setCustomDate(date ?? undefined)}
