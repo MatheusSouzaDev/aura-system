@@ -13,7 +13,7 @@ import {
 } from "@/app/_utils/transactions";
 import { formatCurrency } from "@/app/_utils/currency";
 import TransactionStatusToggle from "./transaction-status-toggle";
-import { TransactionStatus } from "@prisma/client";
+import { TransactionStatus, TransactionType } from "@prisma/client";
 import EditTransactionButton from "./edit-transaction-button";
 import DeleteTransactionButton from "./delete-transaction-button";
 
@@ -39,6 +39,9 @@ const TransactionsMobileList = ({
         const amountColor = getTransactionAmountColor(transaction.type);
         const accountName = transaction.accountId
           ? accountsMap.get(transaction.accountId)
+          : null;
+        const destinationName = transaction.transferAccountId
+          ? accountsMap.get(transaction.transferAccountId)
           : null;
         const isExecuted = transaction.status === TransactionStatus.EXECUTED;
         const referenceDate =
@@ -66,8 +69,11 @@ const TransactionsMobileList = ({
               <div>
                 <p className="font-semibold">{transaction.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formattedDateShort}
-                  {accountName && ` • ${accountName}`}
+                  {transaction.type === TransactionType.TRANSFER
+                    ? `${formattedDateShort} - ${(accountName ?? "Origem") + " -> " + (destinationName ?? "Destino")}`
+                    : `${formattedDateShort}${
+                        accountName ? ` - ${accountName}` : ""
+                      }`}
                 </p>
               </div>
               <TransactionStatusToggle transaction={transaction} size="sm" />

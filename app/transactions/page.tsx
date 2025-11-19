@@ -34,10 +34,24 @@ const TransactionsPage = async () => {
   const executedBalances = transactions
     .filter((transaction) => transaction.status === TransactionStatus.EXECUTED)
     .reduce<Record<string, number>>((totals, transaction) => {
+      const amount = Number(transaction.amount);
+      if (transaction.type === TransactionType.TRANSFER) {
+        if (transaction.accountId) {
+          const currentSourceTotal = totals[transaction.accountId] ?? 0;
+          totals[transaction.accountId] = currentSourceTotal - amount;
+        }
+        if (transaction.transferAccountId) {
+          const currentDestinationTotal =
+            totals[transaction.transferAccountId] ?? 0;
+          totals[transaction.transferAccountId] =
+            currentDestinationTotal + amount;
+        }
+        return totals;
+      }
+
       if (!transaction.accountId) {
         return totals;
       }
-      const amount = Number(transaction.amount);
       const currentTotal = totals[transaction.accountId] ?? 0;
       const nextTotal =
         transaction.type === TransactionType.DEPOSIT

@@ -32,12 +32,17 @@ interface UpsertTransactionParams {
   recurrenceEndsAt?: Date | null;
   recurrenceSkipWeekdays?: number[] | null;
   installmentValueIsTotal?: boolean;
+  transferAccountId?: string | null;
 }
 
 export const upsertTransaction = async (params: UpsertTransactionParams) => {
   upsertTransactionSchema.parse(params);
-  const { recurrenceSkipWeekdays, installmentValueIsTotal, ...safeParams } =
-    params;
+  const {
+    recurrenceSkipWeekdays,
+    installmentValueIsTotal,
+    transferAccountId,
+    ...safeParams
+  } = params;
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
@@ -81,10 +86,16 @@ export const upsertTransaction = async (params: UpsertTransactionParams) => {
       ? JSON.stringify(recurrenceSkipWeekdays)
       : null;
 
+  const normalizedTransferAccountId =
+    safeParams.type === TransactionType.TRANSFER
+      ? (transferAccountId ?? null)
+      : null;
+
   const baseTransactionData = {
     ...safeParams,
     amount: normalizedAmount,
     installmentValueIsTotal: shouldPersistInstallmentFlag,
+    transferAccountId: normalizedTransferAccountId,
   };
 
   const savedTransaction = await db.transaction.upsert({

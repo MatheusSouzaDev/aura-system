@@ -17,6 +17,7 @@ export const upsertTransactionSchema = z
     paymentMethod: z.nativeEnum(TransactionPaymentMethod),
     date: z.date(),
     accountId: z.string().uuid(),
+    transferAccountId: z.string().uuid().optional().nullable(),
     status: z.nativeEnum(TransactionStatus),
     fulfillmentType: z.nativeEnum(TransactionFulfillmentType),
     installmentIndex: z.number().min(1).optional(),
@@ -31,6 +32,30 @@ export const upsertTransactionSchema = z
       .nullable(),
   })
   .superRefine((data, ctx) => {
+    if (data.type === TransactionType.TRANSFER) {
+      if (!data.transferAccountId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Selecione a conta de destino",
+          path: ["transferAccountId"],
+        });
+      } else if (data.transferAccountId === data.accountId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "As contas devem ser diferentes",
+          path: ["transferAccountId"],
+        });
+      }
+
+      if (data.fulfillmentType !== TransactionFulfillmentType.IMMEDIATE) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Transferencias devem ser imediatas",
+          path: ["fulfillmentType"],
+        });
+      }
+    }
+
     if (data.fulfillmentType === TransactionFulfillmentType.INSTALLMENT) {
       if (
         typeof data.installmentCount !== "number" ||

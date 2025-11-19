@@ -1,6 +1,10 @@
 import { getDashboardContext } from "../dashboard-context";
 import { db } from "@/app/_lib/prisma";
-import { TransactionStatus, TransactionType } from "@prisma/client";
+import {
+  TransactionCategory,
+  TransactionStatus,
+  TransactionType,
+} from "@prisma/client";
 import {
   DashboardData,
   TotalExpensePerCategory,
@@ -25,6 +29,9 @@ const getSignedAmount = (type: TransactionType, amount: number) => {
   if (type === TransactionType.DEPOSIT) {
     return amount;
   }
+  if (type === TransactionType.TRANSFER) {
+    return 0;
+  }
 
   return -amount;
 };
@@ -48,6 +55,15 @@ export const getDashboard = async ({
         }
       : {};
 
+  const buildTransferAccountFilter = (ids: string[]) =>
+    ids.length
+      ? {
+          transferAccountId: {
+            in: ids,
+          },
+        }
+      : {};
+
   const balanceAccountIds = accounts
     .filter((account) => account.includeInBalance)
     .map((account) => account.id);
@@ -57,14 +73,6 @@ export const getDashboard = async ({
   const investmentAccountIds = accounts
     .filter((account) => account.includeInInvestments)
     .map((account) => account.id);
-  const percentageAccountIds = Array.from(
-    new Set([
-      ...balanceAccountIds,
-      ...cashFlowAccountIds,
-      ...investmentAccountIds,
-    ]),
-  );
-
   const currentExecutedWhere = {
     userId,
     status: TransactionStatus.EXECUTED,
@@ -86,7 +94,6 @@ export const getDashboard = async ({
     depositAggregate,
     expensesAggregate,
     investmentsAggregate,
-    transactionsAggregate,
     expensesPerCategoryAggregate,
     lastTransactions,
     balanceDepositAggregate,
@@ -95,7 +102,13 @@ export const getDashboard = async ({
     previousBalanceDepositAggregate,
     previousBalanceExpensesAggregate,
     previousBalanceInvestmentsAggregate,
+    transferOutBalanceAggregate,
+    transferInBalanceAggregate,
+    previousTransferOutBalanceAggregate,
+    previousTransferInBalanceAggregate,
     accountBalanceGroups,
+    accountInvestmentGroups,
+    transferInAccountGroups,
     forecastTransactionsInPeriod,
   ] = await Promise.all([
     db.transaction.aggregate({
@@ -117,15 +130,9 @@ export const getDashboard = async ({
     db.transaction.aggregate({
       where: {
         ...currentExecutedWhere,
-        type: TransactionType.INVESTMENT,
+        category: TransactionCategory.INVESTMENT,
+        type: TransactionType.EXPENSE,
         ...buildAccountFilter(investmentAccountIds),
-      },
-      _sum: { amount: true },
-    }),
-    db.transaction.aggregate({
-      where: {
-        ...currentExecutedWhere,
-        ...buildAccountFilter(percentageAccountIds),
       },
       _sum: { amount: true },
     }),
@@ -171,7 +178,8 @@ export const getDashboard = async ({
     db.transaction.aggregate({
       where: {
         ...currentExecutedWhere,
-        type: TransactionType.INVESTMENT,
+        category: TransactionCategory.INVESTMENT,
+        type: TransactionType.EXPENSE,
         ...buildAccountFilter(balanceAccountIds),
       },
       _sum: { amount: true },
@@ -195,8 +203,41 @@ export const getDashboard = async ({
     db.transaction.aggregate({
       where: {
         ...executedBeforeCurrentWhere,
-        type: TransactionType.INVESTMENT,
+        category: TransactionCategory.INVESTMENT,
+        type: TransactionType.EXPENSE,
         ...buildAccountFilter(balanceAccountIds),
+      },
+      _sum: { amount: true },
+    }),
+    db.transaction.aggregate({
+      where: {
+        ...currentExecutedWhere,
+        type: TransactionType.TRANSFER,
+        ...buildAccountFilter(balanceAccountIds),
+      },
+      _sum: { amount: true },
+    }),
+    db.transaction.aggregate({
+      where: {
+        ...currentExecutedWhere,
+        type: TransactionType.TRANSFER,
+        ...buildTransferAccountFilter(balanceAccountIds),
+      },
+      _sum: { amount: true },
+    }),
+    db.transaction.aggregate({
+      where: {
+        ...executedBeforeCurrentWhere,
+        type: TransactionType.TRANSFER,
+        ...buildAccountFilter(balanceAccountIds),
+      },
+      _sum: { amount: true },
+    }),
+    db.transaction.aggregate({
+      where: {
+        ...executedBeforeCurrentWhere,
+        type: TransactionType.TRANSFER,
+        ...buildTransferAccountFilter(balanceAccountIds),
       },
       _sum: { amount: true },
     }),
@@ -205,6 +246,28 @@ export const getDashboard = async ({
       where: {
         userId,
         status: TransactionStatus.EXECUTED,
+      },
+      _sum: { amount: true },
+    }),
+    db.transaction.groupBy({
+      by: ["accountId"],
+      where: {
+        userId,
+        status: TransactionStatus.EXECUTED,
+        category: TransactionCategory.INVESTMENT,
+        type: TransactionType.EXPENSE,
+      },
+      _sum: { amount: true },
+    }),
+    db.transaction.groupBy({
+      by: ["transferAccountId"],
+      where: {
+        userId,
+        status: TransactionStatus.EXECUTED,
+        type: TransactionType.TRANSFER,
+        transferAccountId: {
+          not: null,
+        },
       },
       _sum: { amount: true },
     }),
@@ -223,7 +286,7 @@ export const getDashboard = async ({
   const depositTotal = Number(depositAggregate._sum.amount ?? 0);
   const expensesTotal = Number(expensesAggregate._sum.amount ?? 0);
   const investmentsTotal = Number(investmentsAggregate._sum.amount ?? 0);
-  const transactionsTotal = Number(transactionsAggregate._sum.amount ?? 0);
+  const transactionsTotal = depositTotal + expensesTotal + investmentsTotal;
 
   const balanceDepositTotal = Number(balanceDepositAggregate._sum.amount ?? 0);
   const balanceExpensesTotal = Number(
@@ -242,17 +305,54 @@ export const getDashboard = async ({
   const previousMonthInvestmentsTotal = Number(
     previousBalanceInvestmentsAggregate._sum.amount ?? 0,
   );
+  const transferOutBalanceTotal = Number(
+    transferOutBalanceAggregate._sum.amount ?? 0,
+  );
+  const transferInBalanceTotal = Number(
+    transferInBalanceAggregate._sum.amount ?? 0,
+  );
+  const previousTransferOutBalanceTotal = Number(
+    previousTransferOutBalanceAggregate._sum.amount ?? 0,
+  );
+  const previousTransferInBalanceTotal = Number(
+    previousTransferInBalanceAggregate._sum.amount ?? 0,
+  );
 
   const previousMonthBalance =
     previousMonthDepositTotal -
     previousMonthExpensesTotal -
-    previousMonthInvestmentsTotal;
+    previousMonthInvestmentsTotal -
+    previousTransferOutBalanceTotal +
+    previousTransferInBalanceTotal;
   const balanceDifference =
-    balanceDepositTotal - balanceExpensesTotal - balanceInvestmentsTotal;
+    balanceDepositTotal -
+    balanceExpensesTotal -
+    balanceInvestmentsTotal -
+    transferOutBalanceTotal +
+    transferInBalanceTotal;
   const balanceTotal = previousMonthBalance + balanceDifference;
   const forecastPendingImpact = forecastTransactionsInPeriod.reduce(
-    (total, transaction) =>
-      total + getSignedAmount(transaction.type, Number(transaction.amount)),
+    (total, transaction) => {
+      const amount = Number(transaction.amount);
+      if (transaction.type === TransactionType.TRANSFER) {
+        let impact = 0;
+        if (
+          transaction.accountId &&
+          balanceAccountIds.includes(transaction.accountId)
+        ) {
+          impact -= amount;
+        }
+        if (
+          transaction.transferAccountId &&
+          balanceAccountIds.includes(transaction.transferAccountId)
+        ) {
+          impact += amount;
+        }
+        return total + impact;
+      }
+
+      return total + getSignedAmount(transaction.type, amount);
+    },
     0,
   );
   const forecastDifference = balanceDifference + forecastPendingImpact;
@@ -265,6 +365,8 @@ export const getDashboard = async ({
         deposit: number;
         expense: number;
         investment: number;
+        transferOut: number;
+        transferIn: number;
       }
     >
   >((totals, group) => {
@@ -276,6 +378,8 @@ export const getDashboard = async ({
       deposit: 0,
       expense: 0,
       investment: 0,
+      transferOut: 0,
+      transferIn: 0,
     };
 
     if (group.type === TransactionType.DEPOSIT) {
@@ -284,19 +388,55 @@ export const getDashboard = async ({
     if (group.type === TransactionType.EXPENSE) {
       currentTotals.expense += Number(group._sum.amount ?? 0);
     }
-    if (group.type === TransactionType.INVESTMENT) {
-      currentTotals.investment += Number(group._sum.amount ?? 0);
+    if (group.type === TransactionType.TRANSFER) {
+      currentTotals.transferOut += Number(group._sum.amount ?? 0);
     }
 
     totals[group.accountId] = currentTotals;
     return totals;
   }, {});
 
+  accountInvestmentGroups.forEach((group) => {
+    if (!group.accountId) {
+      return;
+    }
+
+    const currentTotals = accountTotals[group.accountId] ?? {
+      deposit: 0,
+      expense: 0,
+      investment: 0,
+      transferOut: 0,
+      transferIn: 0,
+    };
+
+    currentTotals.investment += Number(group._sum.amount ?? 0);
+    accountTotals[group.accountId] = currentTotals;
+  });
+
+  transferInAccountGroups.forEach((group) => {
+    if (!group.transferAccountId) {
+      return;
+    }
+
+    const currentTotals = accountTotals[group.transferAccountId] ?? {
+      deposit: 0,
+      expense: 0,
+      investment: 0,
+      transferOut: 0,
+      transferIn: 0,
+    };
+
+    currentTotals.transferIn += Number(group._sum.amount ?? 0);
+    accountTotals[group.transferAccountId] = currentTotals;
+  });
+
   const accountsSummary = accounts.map((account) => {
     const totals = accountTotals[account.id] ?? {
       deposit: 0,
       expense: 0,
       investment: 0,
+      transferOut: 0,
+      transferIn: 0,
     };
 
     return {
@@ -308,23 +448,19 @@ export const getDashboard = async ({
       includeInInvestments: account.includeInInvestments,
       includeInAiReports: account.includeInAiReports,
       includeInOverview: account.includeInOverview,
-      balance: totals.deposit - totals.expense - totals.investment,
+      balance:
+        totals.deposit +
+        totals.transferIn -
+        totals.expense -
+        totals.investment -
+        totals.transferOut,
     };
   });
 
   const typesPercentage: TransactionPercentagePerType = {
-    [TransactionType.DEPOSIT]: calculatePercentage(
-      depositTotal,
-      transactionsTotal,
-    ),
-    [TransactionType.EXPENSE]: calculatePercentage(
-      expensesTotal,
-      transactionsTotal,
-    ),
-    [TransactionType.INVESTMENT]: calculatePercentage(
-      investmentsTotal,
-      transactionsTotal,
-    ),
+    deposit: calculatePercentage(depositTotal, transactionsTotal),
+    expense: calculatePercentage(expensesTotal, transactionsTotal),
+    investment: calculatePercentage(investmentsTotal, transactionsTotal),
   };
 
   const totalExpensePerCategory: TotalExpensePerCategory[] =

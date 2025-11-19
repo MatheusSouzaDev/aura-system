@@ -41,6 +41,7 @@ const EditTransactionButton = ({
           date: new Date(transaction.date),
           amount: normalizedAmount,
           accountId: transaction.accountId ?? accounts[0]?.id ?? "",
+          transferAccountId: transaction.transferAccountId ?? undefined,
           installmentIndex: transaction.installmentIndex ?? undefined,
           installmentCount: transaction.installmentCount ?? undefined,
           installmentValueIsTotal: transaction.installmentValueIsTotal ?? false,

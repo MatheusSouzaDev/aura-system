@@ -3,13 +3,13 @@ import { TransactionType } from "@prisma/client";
 const TRANSACTION_TYPE_COLOR_MAP: Record<TransactionType, string> = {
   [TransactionType.DEPOSIT]: "text-primary",
   [TransactionType.EXPENSE]: "text-red-500",
-  [TransactionType.INVESTMENT]: "text-white",
+  [TransactionType.TRANSFER]: "text-slate-200",
 };
 
 const TRANSACTION_TYPE_PREFIX_MAP: Record<TransactionType, string> = {
   [TransactionType.DEPOSIT]: "+",
   [TransactionType.EXPENSE]: "-",
-  [TransactionType.INVESTMENT]: "",
+  [TransactionType.TRANSFER]: "",
 };
 
 export const getTransactionAmountColor = (

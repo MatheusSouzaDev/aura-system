@@ -1,24 +1,25 @@
 import { TransactionPaymentMethod, TransactionType } from "@prisma/client";
 
 export const TRANSACTION_CATEGORY_LABELS = {
-  EDUCATION: "Educação",
+  EDUCATION: "Educacao",
   ENTERTAIMENT: "Entretenimento",
-  FOOD: "Alimentação",
-  HELTH: "Saúde",
+  FOOD: "Alimentacao",
+  HELTH: "Saude",
   HOUSING: "Moradia",
   OTHER: "Outros",
-  SALARY: "Salário",
+  SALARY: "Salario",
   TRANSPORTATION: "Transporte",
   UTILITY: "Utilidades",
+  INVESTMENT: "Investimento",
 };
 
 export const TRANSACTION_PAYMENT_METHOD_LABELS = {
   PIX: "Pix",
   CASH: "Dinheiro",
-  DEBIT_CARD: "Cartão de Débito",
-  CREDIT_CARD: "Cartão de Crédito",
-  BANK_SLIP: "Boleto Bancário",
-  BANK_TRANSFER: "Transferência Bancária",
+  DEBIT_CARD: "Cartao de Debito",
+  CREDIT_CARD: "Cartao de Credito",
+  BANK_SLIP: "Boleto Bancario",
+  BANK_TRANSFER: "Transferencia Bancaria",
   OTHER: "Outros",
 };
 
@@ -42,8 +43,8 @@ export const TRANSACTION_TYPE_OPTIONS = [
     value: TransactionType.DEPOSIT,
   },
   {
-    label: "Investimento",
-    value: TransactionType.INVESTMENT,
+    label: "Transferencia",
+    value: TransactionType.TRANSFER,
   },
 ];
 
@@ -114,5 +115,9 @@ export const TRANSACTION_CATEGORY_OPTIONS = [
   {
     label: TRANSACTION_CATEGORY_LABELS.OTHER,
     value: "OTHER",
+  },
+  {
+    label: TRANSACTION_CATEGORY_LABELS.INVESTMENT,
+    value: "INVESTMENT",
   },
 ];
