@@ -35,7 +35,10 @@ const SubscriptionPage = async () => {
               .replace(".", ",");
 
             const limitInfo = plan.capabilities.transactionsLimit
-              ? `${currentMonthTransactions}/${plan.capabilities.transactionsLimit}`
+              ? `${Math.min(
+                  currentMonthTransactions,
+                  plan.capabilities.transactionsLimit,
+                )}/${plan.capabilities.transactionsLimit}`
               : null;
 
             return (

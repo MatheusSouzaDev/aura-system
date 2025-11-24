@@ -199,7 +199,9 @@ const createRecurringChildren = async (transaction: Transaction) => {
   const skipWeekdays = parseRecurrenceSkipWeekdays(
     transaction.recurrenceSkipWeekdays,
   );
-  const maxOccurrences = 120;
+  const today = new Date();
+  const maxMaterializationDate = endDate ?? addMonths(today, 18);
+  const maxOccurrences = 24;
   const occurrences: Date[] = [];
   let iterations = 0;
   let cursor = new Date(transaction.date);
@@ -211,7 +213,7 @@ const createRecurringChildren = async (transaction: Transaction) => {
   );
 
   while (nextDate && iterations < maxOccurrences) {
-    if (endDate && nextDate > endDate) {
+    if (nextDate > maxMaterializationDate) {
       break;
     }
 

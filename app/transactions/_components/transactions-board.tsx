@@ -44,11 +44,18 @@ const TransactionsBoard = ({
     [accountOptions],
   );
 
-  const filteredTransactions = useMemo(
-    () =>
-      transactions.filter((transaction) => transaction.status === statusFilter),
-    [transactions, statusFilter],
-  );
+  const filteredTransactions = useMemo(() => {
+    const filtered = transactions.filter(
+      (transaction) => transaction.status === statusFilter,
+    );
+
+    return filtered.sort((a, b) => {
+      const aDate = new Date(a.executedAt ?? a.date).getTime();
+      const bDate = new Date(b.executedAt ?? b.date).getTime();
+
+      return bDate - aDate;
+    });
+  }, [transactions, statusFilter]);
 
   return (
     <div className="flex flex-col gap-4">

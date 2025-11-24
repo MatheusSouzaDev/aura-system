@@ -8,19 +8,53 @@ import { getUserAccounts } from "../_data/accounts";
 import ManageAccountsButton from "../_components/manage-accounts-button";
 import { TransactionStatus, TransactionType } from "@prisma/client";
 import TransactionsBoard from "./_components/transactions-board";
+import { getDashboardContext } from "../_data/dashboard-context";
 
-const TransactionsPage = async () => {
+interface TransactionsPageProps {
+  searchParams?: {
+    month?: string;
+    year?: string;
+  };
+}
+
+const TransactionsPage = async ({ searchParams }: TransactionsPageProps) => {
   const { userId } = await auth();
   if (!userId) {
     redirect("/login");
   }
 
+  const { currentPeriod } = await getDashboardContext({
+    month: searchParams?.month,
+    year: searchParams?.year,
+  });
+
   const transactions = await db.transaction.findMany({
     where: {
       userId,
-    },
-    orderBy: {
-      date: "desc",
+      OR: [
+        {
+          executedAt: {
+            gte: currentPeriod.start,
+            lte: currentPeriod.end,
+          },
+        },
+        {
+          AND: [
+            {
+              OR: [
+                { executedAt: null },
+                { executedAt: { lt: currentPeriod.start } },
+              ],
+            },
+            {
+              date: {
+                gte: currentPeriod.start,
+                lte: currentPeriod.end,
+              },
+            },
+          ],
+        },
+      ],
     },
   });
 
