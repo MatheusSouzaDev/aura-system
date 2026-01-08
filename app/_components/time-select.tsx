@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { addMonths, subMonths, format } from "date-fns";
-import TimeSelect from "@/app/(home)/_components/time-select"; // <-- seu componente existente
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useCallback } from "react";
+import { ptBR } from "date-fns/locale";
 
 type Props = {
   month?: string;
@@ -14,10 +14,10 @@ type Props = {
   onChange?: (m: string, y: string) => void;
 };
 
-export default function MonthControls({
+export default function TimeSelect({
   month,
   year,
-  basePath = "/transactions",
+  basePath = "",
   className = "",
   onChange,
 }: Props) {
@@ -41,23 +41,27 @@ export default function MonthControls({
     [basePath, onChange, router, searchParams],
   );
 
+  const label = useMemo(() => {
+    return format(current, "MMMM yyyy", { locale: ptBR }).replace(/^./, (c) =>
+      c.toUpperCase(),
+    );
+  }, [current]);
+
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       <button
         aria-label="Mês anterior"
         onClick={() => {
           const prev = subMonths(current, 1);
           pushPeriod(prev.getMonth() + 1, prev.getFullYear());
         }}
-        className="rounded-full bg-gray-900 p-2 text-white hover:bg-gray-800"
+        className="rounded-full border border-input bg-background p-2 text-white ring-offset-background hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
       >
         <ChevronLeft size={18} />
       </button>
 
-      <div className="rounded-full bg-black px-4 py-2 text-white">
-        <div className="text-sm font-medium">
-          {format(current, "MMMM yyyy")}
-        </div>
+      <div className="flex-1 rounded-full border border-input bg-background px-4 py-2 text-center text-white hover:bg-white/5">
+        <div className="text-sm font-medium">{label}</div>
       </div>
 
       <button
@@ -66,15 +70,10 @@ export default function MonthControls({
           const next = addMonths(current, 1);
           pushPeriod(next.getMonth() + 1, next.getFullYear());
         }}
-        className="rounded-full bg-gray-900 p-2 text-white hover:bg-gray-800"
+        className="rounded-full border border-input bg-background p-2 text-white ring-offset-background hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
       >
         <ChevronRight size={18} />
       </button>
-
-      {/* Reaproveita o TimeSelect existente (dropdowns mês/ano) */}
-      <div className="ml-2">
-        <TimeSelect month={String(m)} year={String(y)} className="w-[220px]" />
-      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Navbar from "../_components/navbar";
 import SummaryCards from "./_components/summary-cards";
-import TimeSelect from "./_components/time-select";
+import TimeSelect from "../_components/time-select";
 import TransactionsPieChart from "./_components/transactions-pie-chart";
 import { getDashboard } from "../_data/get-dashboard";
 import ExpensePerCategory from "./_components/expense-per-category";
@@ -52,6 +52,7 @@ const Home = async ({ searchParams }: { searchParams: HomeSearchParams }) => {
             <TimeSelect
               month={currentMonth}
               year={currentYear}
+              basePath="/"
               className="min-w-0 flex-1 sm:flex-initial"
             />
           </div>

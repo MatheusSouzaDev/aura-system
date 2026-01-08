@@ -9,7 +9,7 @@ import ManageAccountsButton from "../_components/manage-accounts-button";
 import { TransactionStatus, TransactionType } from "@prisma/client";
 import TransactionsBoard from "./_components/transactions-board";
 import { getDashboardContext } from "../_data/dashboard-context";
-import MonthControls from "./_components/MonthControls";
+import TimeSelect from "../_components/time-select";
 
 interface TransactionsPageProps {
   searchParams?: {
@@ -126,16 +126,16 @@ const TransactionsPage = async ({ searchParams }: TransactionsPageProps) => {
           <h1 className="text-2xl font-bold">Transações</h1>
 
           <div className="flex flex-wrap gap-2">
+            <TimeSelect
+              month={String(currentPeriod.start.getMonth() + 1)}
+              year={String(currentPeriod.start.getFullYear())}
+              basePath="/transactions"
+              className="w-full sm:w-auto"
+            />
             <ManageAccountsButton accounts={manageableAccounts} />
             <AddTransactionButton
               userCanAddTransaction={userCanAddTransaction}
               accounts={accountOptions}
-            />
-            <MonthControls
-              month={String(currentPeriod.start.getMonth() + 1)}
-              year={String(currentPeriod.start.getFullYear())}
-              basePath="/transactions"
-              className=""
             />
           </div>
         </div>
