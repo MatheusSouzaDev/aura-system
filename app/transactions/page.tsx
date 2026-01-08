@@ -9,6 +9,7 @@ import ManageAccountsButton from "../_components/manage-accounts-button";
 import { TransactionStatus, TransactionType } from "@prisma/client";
 import TransactionsBoard from "./_components/transactions-board";
 import { getDashboardContext } from "../_data/dashboard-context";
+import MonthControls from "./_components/MonthControls";
 
 interface TransactionsPageProps {
   searchParams?: {
@@ -60,7 +61,7 @@ const TransactionsPage = async ({ searchParams }: TransactionsPageProps) => {
 
   const userCanAddTransaction = await canUserAddTransaction();
   const accounts = await getUserAccounts();
-  const accountOptions = accounts.map((account) => ({
+  const accountOptions = accounts.map((account: (typeof accounts)[number]) => ({
     id: account.id,
     name: account.name,
   }));
@@ -95,10 +96,12 @@ const TransactionsPage = async ({ searchParams }: TransactionsPageProps) => {
       return totals;
     }, {});
 
-  const manageableAccounts = accounts.map((account) => ({
-    ...account,
-    balance: executedBalances[account.id] ?? 0,
-  }));
+  const manageableAccounts = accounts.map(
+    (account: (typeof accounts)[number]) => ({
+      ...account,
+      balance: executedBalances[account.id] ?? 0,
+    }),
+  );
 
   const serializedTransactions = transactions.map((transaction) => ({
     ...transaction,
@@ -121,11 +124,18 @@ const TransactionsPage = async ({ searchParams }: TransactionsPageProps) => {
       <div className="flex flex-col space-y-6 overflow-x-hidden px-4 py-3 sm:p-6">
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold">Transações</h1>
+
           <div className="flex flex-wrap gap-2">
             <ManageAccountsButton accounts={manageableAccounts} />
             <AddTransactionButton
               userCanAddTransaction={userCanAddTransaction}
               accounts={accountOptions}
+            />
+            <MonthControls
+              month={String(currentPeriod.start.getMonth() + 1)}
+              year={String(currentPeriod.start.getFullYear())}
+              basePath="/transactions"
+              className=""
             />
           </div>
         </div>
